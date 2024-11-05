@@ -10,6 +10,8 @@ router.get('/popular', tripController.getPopularTrips);
 
 router.post('/search', tripController.searchTrips);
 
+router.get('/civitatis-actividades/:city', tripController.getCivitatisActivities);
+
 // Obtener viajes del usuario
 router.get('/user', authMiddleware, tripController.getUserTrips);
 

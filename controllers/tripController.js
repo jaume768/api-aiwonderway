@@ -1,6 +1,130 @@
 const Trip = require('../models/Trip');
 const User = require('../models/User');
 const axios = require('axios');
+const cheerio = require('cheerio');
+const fs = require('fs');
+
+async function fetchCivitatisActivities(city) {
+    if (!city) {
+        throw new Error('La ciudad es requerida como parámetro.');
+    }
+
+    const cityFormatted = city.toLowerCase().replace(/\s+/g, '-');
+    const url = `https://www.civitatis.com/es/${cityFormatted}/`;
+
+    try {
+        const response = await axios.get(url);
+        const $ = cheerio.load(response.data);
+
+        const activities = [];
+
+        $('article.comfort-card').each((index, element) => {
+            const title = $(element).find('h2.comfort-card__title').text().trim();
+            const linkRelative = $(element).find('a._activity-link').attr('href');
+            const link = linkRelative ? `https://www.civitatis.com${linkRelative}` : 'Enlace no disponible';
+            const ratingRaw = $(element).find('span.m-rating--text').text().trim();
+            const reviewsRaw = $(element).find('span.text--rating-total').text().trim();
+            const priceElement = $(element).find('span.comfort-card__price__text');
+            const price = priceElement.length > 0 ? priceElement.text().trim() : 'Gratis';
+
+            const rating = ratingRaw
+                ? ratingRaw.replace(/\s+/g, ' ').replace('/ 10', '').trim()
+                : 'Sin calificación';
+            const reviews = reviewsRaw
+                ? reviewsRaw.replace(/\s+/g, ' ').replace('opiniones', '').trim()
+                : '0';
+
+            activities.push({
+                title: title || 'Título no disponible',
+                link: link,
+                rating: rating,
+                reviews: reviews,
+                price: price
+            });
+        });
+
+        const limitedActivities = activities.slice(0, 5);
+
+        if (limitedActivities.length === 0) {
+            throw new Error(`No se encontraron actividades para la ciudad "${city}".`);
+        }
+
+        return limitedActivities;
+    } catch (error) {
+        console.error(`Error al extraer actividades para la ciudad "${city}":`, error.message);
+        if (error.response && error.response.status === 404) {
+            throw new Error(`La ciudad "${city}" no existe en Civitatis.`);
+        }
+        throw new Error('Error al extraer las actividades de Civitatis.');
+    }
+}
+
+exports.getCivitatisActivities = async (req, res) => {
+    try {
+        const { city } = req.params;
+
+        const activities = await fetchCivitatisActivities(city);
+
+        res.json(activities);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+async function getTopCities(country) {
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    const prompt = `
+        Proporciona una lista en formato JSON de las 3 ciudades más importantes de ${country}. La respuesta debe ser únicamente un array JSON con los nombres de las ciudades.
+
+        Ejemplo de formato:
+        ["Ciudad1", "Ciudad2", "Ciudad3"]
+    `;
+
+    try {
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: "gpt-4o",
+                messages: [
+                    { role: "system", content: "Eres un experto en geografía y turismo." },
+                    { role: "user", content: prompt }
+                ],
+                max_tokens: 100,
+                temperature: 0.3,
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+            }
+        );
+
+        let citiesText = response.data.choices[0].message.content.trim();
+
+        if (citiesText.startsWith('[') && citiesText.endsWith(']')) {
+        } else {
+            const jsonMatch = citiesText.match(/\[.*\]/s);
+            if (jsonMatch) {
+                citiesText = jsonMatch[0];
+            } else {
+                throw new Error('No se pudo extraer el JSON de ciudades de la respuesta de OpenAI.');
+            }
+        }
+
+        const cities = JSON.parse(citiesText);
+
+        if (!Array.isArray(cities) || cities.length < 3) {
+            throw new Error('La respuesta de OpenAI no contiene una lista válida de ciudades.');
+        }
+
+        return cities.slice(0, 3);
+    } catch (error) {
+        console.error('Error al obtener las ciudades desde OpenAI:', error.response ? error.response.data : error.message);
+        throw new Error('No se pudo obtener las ciudades principales del país.');
+    }
+}
 
 exports.createTrip = async (req, res) => {
     try {
@@ -28,6 +152,7 @@ exports.createTrip = async (req, res) => {
             'travelDates.endDate',
             'destinationPreferences',
             'destinationPreferences.type',
+            'destinationPreferences.country',
             'budget',
             'budget.total',
             'accommodationPreferences',
@@ -51,7 +176,22 @@ exports.createTrip = async (req, res) => {
             }
         }
 
-        const itinerary = await generateItinerary({
+        const country = destinationPreferences.country;
+        const topCities = await getTopCities(country);
+
+        const activitiesPerCity = {};
+
+        for (const city of topCities) {
+            try {
+                const activities = await fetchCivitatisActivities(city);
+                activitiesPerCity[city] = activities;
+            } catch (activityError) {
+                console.error(`Error al obtener actividades para la ciudad "${city}":`, activityError.message);
+                activitiesPerCity[city] = [];
+            }
+        }
+
+        const userData = {
             travelDates,
             destinationPreferences,
             budget,
@@ -62,8 +202,11 @@ exports.createTrip = async (req, res) => {
             travelCompanion,
             activityLevel,
             additionalPreferences,
-            description
-        });
+            description,
+            activitiesPerCity
+        };
+
+        const itinerary = await generateItinerary(userData);
 
         const trip = new Trip({
             createdBy: userId,
@@ -98,6 +241,17 @@ exports.createTrip = async (req, res) => {
 
 async function generateItinerary(userData) {
     const apiKey = process.env.OPENAI_API_KEY;
+
+    let activitiesDescription = '';
+    if (userData.activitiesPerCity && Object.keys(userData.activitiesPerCity).length > 0) {
+        activitiesDescription += 'Aquí tienes algunas actividades recomendadas para las ciudades principales:\n';
+        for (const [city, activities] of Object.entries(userData.activitiesPerCity)) {
+            activitiesDescription += `\n**${city}:**\n`;
+            activities.forEach((activity, index) => {
+                activitiesDescription += `${index + 1}. ${activity.title} - ${activity.price}\n`;
+            });
+        }
+    }
 
     const prompt = `
         Eres un asistente de planificación de viajes experto. Basándote en la información proporcionada, genera un itinerario detallado para el viaje. El itinerario debe estar organizado por días e incluir recomendaciones de actividades, lugares para visitar, opciones de alojamiento y transporte. La respuesta **debe ser únicamente** un objeto JSON con la siguiente estructura:
@@ -167,6 +321,8 @@ async function generateItinerary(userData) {
         **Otros Aspectos Importantes:**
         - ${userData.additionalPreferences || 'Ninguno'}
 
+        ${activitiesDescription}
+
         **Instrucciones Adicionales:**
         - La respuesta debe ser únicamente el JSON sin ningún otro texto ni formateo, sin incluir \`\`\`json ni \`\`\`.
     `;
@@ -180,7 +336,7 @@ async function generateItinerary(userData) {
                     { role: "system", content: "Eres un asistente útil para planificar viajes." },
                     { role: "user", content: prompt }
                 ],
-                max_tokens: 2000,
+                max_tokens: 7000,
                 temperature: 0.7,
             },
             {
