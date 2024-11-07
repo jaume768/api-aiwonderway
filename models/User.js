@@ -9,6 +9,7 @@ const userSchema = new Schema(
         password: { type: String, required: true },
         friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+        favorites: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
         trips: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
         travelPreferences: {
             travelDates: {

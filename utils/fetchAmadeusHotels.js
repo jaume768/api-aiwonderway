@@ -1,7 +1,10 @@
 const axios = require('axios');
 const Hotel = require('../models/Hotel');
 
-async function fetchAmadeusHotels(cityCode,numHotels) {
+let amadeusToken = null;
+let tokenExpirationTime = null;
+
+async function fetchAmadeusHotels(cityCode, numHotels = 4) {
     try {
         let hotelsInDB = await Hotel.find({ cityCode });
 
@@ -48,25 +51,27 @@ async function fetchAmadeusHotels(cityCode,numHotels) {
 }
 
 async function getAmadeusToken() {
-    try {
-        const params = new URLSearchParams();
-        params.append('grant_type', 'client_credentials');
-        params.append('client_id', process.env.AMADEUS_API_KEY);
-        params.append('client_secret', process.env.AMADEUS_API_SECRET);
+    if (amadeusToken && tokenExpirationTime && new Date() < tokenExpirationTime) {
+        return amadeusToken;
+    }
 
-        const response = await axios.post('https://api.amadeus.com/v1/security/oauth2/token', params, {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+    try {
+        const response = await axios.post('https://api.amadeus.com/v1/security/oauth2/token', null, {
+            params: {
+                grant_type: 'client_credentials',
+                client_id: process.env.AMADEUS_API_KEY,
+                client_secret: process.env.AMADEUS_API_SECRET,
             },
         });
 
-        return response.data.access_token;
+        amadeusToken = response.data.access_token;
+        const expiresIn = response.data.expires_in;
+
+        tokenExpirationTime = new Date(new Date().getTime() + expiresIn * 1000);
+
+        return amadeusToken;
     } catch (error) {
-        if (error.response) {
-            console.error('Error al obtener el token de Amadeus:', error.response.data);
-        } else {
-            console.error('Error al obtener el token de Amadeus:', error.message);
-        }
+        console.error('Error al obtener el token de Amadeus:', error.message);
         throw new Error('No se pudo obtener el token de Amadeus.');
     }
 }

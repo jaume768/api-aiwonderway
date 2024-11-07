@@ -1,5 +1,21 @@
-Integración con APIs Externas: Conecta con APIs como Google Maps para mostrar mapas interactivos, o con servicios de reserva para permitir a los usuarios reservar alojamiento o actividades directamente desde la app.
-Sistema de Roles y Permisos: Implementa diferentes niveles de acceso (administradores, usuarios premium, etc.) con permisos específicos para cada rol.
-Favoritos y Listas Personalizadas: Permite a los usuarios guardar itinerarios, destinos o actividades en una lista de favoritos para acceder a ellos fácilmente en el futuro.
-Integración de Pagos: Si planeas ofrecer servicios premium, podrías integrar un sistema de pagos seguro para suscripciones o compras dentro de la aplicación.
-Soporte Multilingüe: Amplía el alcance de tu aplicación permitiendo que sea utilizada en varios idiomas, atrayendo a una audiencia más global.
+Integración con APIs Externas: 
+        Conecta con APIs como Google Maps para mostrar mapas interactivos, 
+        o con servicios de reserva para permitir a los usuarios reservar alojamiento o actividades directamente desde la app.
+
+        (s'ha integrat mas o menos, he utilitzat s'api de amadeus per conseguir hotels i recomenarlos depenguent de sa ciutat que se recomana)
+
+Sistema de Roles y Permisos: 
+        Implementa diferentes niveles de acceso (administradores, usuarios premium, usuarios vip, usuarios normales, usuarios no registrados) -> (primera idea) 
+        con permisos específicos para cada rol.
+
+Favoritos y Listas Personalizadas: 
+        Permite a los usuarios guardar itinerarios, destinos 
+        o actividades en una lista de favoritos para acceder a ellos fácilmente en el futuro.
+
+Integración de Pagos: 
+        Si planeas ofrecer servicios premium, podrías integrar un sistema de pagos seguro para suscripciones 
+        o compras dentro de la aplicación.
+
+Soporte Multilingüe: 
+        Amplía el alcance de tu aplicación permitiendo que sea utilizada en varios idiomas, 
+        atrayendo a una audiencia más global.

@@ -38,7 +38,7 @@ async function generateItinerary(userData) {
                         "ubicación": "Lugar de la actividad"
                     }
                 ],
-                "alojamiento": "Recomendación de alojamiento para este día",
+                "alojamiento": "Nombre del hotel recomendado",
                 "transporte": "Detalles sobre transporte si aplica"
             },
             "dia2": { ... },
@@ -112,7 +112,7 @@ async function generateItinerary(userData) {
                     { role: "system", content: "Eres un asistente útil para planificar viajes." },
                     { role: "user", content: prompt }
                 ],
-                max_tokens: 7000,
+                max_tokens: 8000,
                 temperature: 0.7,
             },
             {

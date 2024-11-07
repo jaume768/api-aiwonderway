@@ -3,15 +3,12 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Enviar solicitud de amistad
 router.post('/add-friend', authMiddleware, userController.addFriend);
-
-// Aceptar solicitud de amistad
 router.post('/accept-friend', authMiddleware, userController.acceptFriendRequest);
-
-// Obtener viajes de un amigo
 router.get('/:friendId/trips', authMiddleware, userController.getFriendTrips);
-
 router.get('/friend-requests', authMiddleware, userController.getFriendRequests);
+router.post('/favorites/add', authMiddleware, userController.addFavoriteTrip);
+router.post('/favorites/remove', authMiddleware, userController.removeFavoriteTrip);
+router.get('/favorites', authMiddleware, userController.getFavoriteTrips);
 
 module.exports = router;
