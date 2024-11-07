@@ -1,8 +1,10 @@
 const Trip = require('../models/Trip');
 const User = require('../models/User');
 const fetchCivitatisActivities = require('../utils/fetchCivitatisActivities');
+const fetchAmadeusHotels = require('../utils/fetchAmadeusHotels');
 const getTopCities = require('../utils/getTopCities');
 const generateItinerary = require('../utils/generateItinerary');
+const moment = require('moment');
 
 exports.createTrip = async (req, res) => {
     try {
@@ -55,22 +57,37 @@ exports.createTrip = async (req, res) => {
         }
 
         const numCities = Number(numberOfCities) || 3;
-        if (numCities < 0) {
-            return res.status(400).json({ msg: 'El número de ciudades debe ser minimo una.' });
+        if (numCities < 1) {
+            return res.status(400).json({ msg: 'El número de ciudades debe ser al menos una.' });
         }
 
         const country = destinationPreferences.country;
         const topCities = await getTopCities(country, numCities);
 
         const activitiesPerCity = {};
+        const hotelsPerCity = {};
 
-        for (const city of topCities) {
+        for (const cityObj of topCities) {
+            const citySpanish = cityObj.spanish;
+            const cityEnglish = cityObj.english;
+
             try {
-                const activities = await fetchCivitatisActivities(city,5);
-                activitiesPerCity[city] = activities;
+                const activities = await fetchCivitatisActivities(citySpanish, 5);
+                activitiesPerCity[citySpanish] = activities;
             } catch (activityError) {
-                console.error(`Error al obtener actividades para la ciudad "${city}":`, activityError.message);
-                activitiesPerCity[city] = [];
+                console.error(`Error al obtener actividades para la ciudad "${citySpanish}":`, activityError.message);
+                activitiesPerCity[citySpanish] = [];
+            }
+
+            try {
+                const checkInDate = moment(travelDates.startDate).format('YYYY-MM-DD');
+                const checkOutDate = moment(travelDates.endDate).format('YYYY-MM-DD');
+
+                const hotels = await fetchAmadeusHotels(cityEnglish, checkInDate, checkOutDate, 5);
+                hotelsPerCity[citySpanish] = hotels;
+            } catch (hotelError) {
+                console.error(`Error al obtener hoteles para la ciudad "${cityEnglish}":`, hotelError.message);
+                hotelsPerCity[citySpanish] = [];
             }
         }
 
@@ -86,7 +103,8 @@ exports.createTrip = async (req, res) => {
             activityLevel,
             additionalPreferences,
             description,
-            activitiesPerCity
+            activitiesPerCity,
+            hotelsPerCity
         };
 
         const itinerary = await generateItinerary(userData);

@@ -13,7 +13,18 @@ async function generateItinerary(userData) {
             });
         }
     }
-    
+
+    let hotelsDescription = '';
+    if (userData.hotelsPerCity && Object.keys(userData.hotelsPerCity).length > 0) {
+        hotelsDescription += 'Aquí tienes algunos hoteles recomendados para las ciudades principales:\n';
+        for (const [city, hotels] of Object.entries(userData.hotelsPerCity)) {
+            hotelsDescription += `\n**${city}:**\n`;
+            hotels.forEach((hotel, index) => {
+                hotelsDescription += `${index + 1}. ${hotel.name} - ${hotel.address} - ${hotel.price}\n`;
+            });
+        }
+    }
+
     const prompt = `
         Eres un asistente de planificación de viajes experto. Basándote en la información proporcionada, genera un itinerario detallado para el viaje. El itinerario debe estar organizado por días e incluir recomendaciones de actividades, lugares para visitar, opciones de alojamiento y transporte. La respuesta **debe ser únicamente** un objeto JSON con la siguiente estructura:
 
@@ -27,7 +38,8 @@ async function generateItinerary(userData) {
                         "ubicación": "Lugar de la actividad"
                     }
                 ],
-                "acompañamiento": "Detalles sobre alojamiento y transporte si aplica"
+                "alojamiento": "Recomendación de alojamiento para este día",
+                "transporte": "Detalles sobre transporte si aplica"
             },
             "dia2": { ... },
             ...
@@ -84,8 +96,11 @@ async function generateItinerary(userData) {
 
         ${activitiesDescription}
 
+        ${hotelsDescription}
+
         **Instrucciones Adicionales:**
         - La respuesta debe ser únicamente el JSON sin ningún otro texto ni formateo, sin incluir \`\`\`json ni \`\`\`.
+        - Asegúrate de que cada día incluya recomendaciones de alojamiento basadas en las opciones de hoteles proporcionadas.
     `;
 
     try {

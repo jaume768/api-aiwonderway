@@ -4,22 +4,25 @@ async function getTopCities(country, numberOfCities = 3) {
     const apiKey = process.env.OPENAI_API_KEY;
 
     const prompt = `
-        Proporciona una lista en formato JSON de las ${numberOfCities} ciudades más importantes de ${country} sin acentos, en minuscula y en español. La respuesta debe ser únicamente un array JSON con los nombres de las ciudades.
-    
-        Ejemplo de formato:
-        ["Ciudad1", "Ciudad2", "Ciudad3"]
+        Proporciona una lista en formato JSON de las ${numberOfCities} ciudades más importantes de ${country}. 
+        Para cada ciudad, proporciona el nombre en español (en minúsculas y sin acentos) y en inglés (con la primera letra en mayúscula). 
+        La respuesta debe ser un array JSON de objetos con la estructura:
+        [
+            { "spanish": "nombre en español sin acentos y en minúsculas", "english": "Nombre en inglés con la primera letra en mayúscula" },
+            ...
+        ]
     `;
 
     try {
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
-                model: "gpt-4o-mini",
+                model: "gpt-4",
                 messages: [
                     { role: "system", content: "Eres un experto en geografía y turismo." },
                     { role: "user", content: prompt }
                 ],
-                max_tokens: 100,
+                max_tokens: 200,
                 temperature: 0.3,
             },
             {
@@ -32,13 +35,11 @@ async function getTopCities(country, numberOfCities = 3) {
 
         let citiesText = response.data.choices[0].message.content.trim();
 
-        if (!citiesText.startsWith('[') || !citiesText.endsWith(']')) {
-            const jsonMatch = citiesText.match(/\[.*\]/s);
-            if (jsonMatch) {
-                citiesText = jsonMatch[0];
-            } else {
-                throw new Error('No se pudo extraer el JSON de ciudades de la respuesta de OpenAI.');
-            }
+        const jsonMatch = citiesText.match(/\[.*\]/s);
+        if (jsonMatch) {
+            citiesText = jsonMatch[0];
+        } else {
+            throw new Error('No se pudo extraer el JSON de ciudades de la respuesta de OpenAI.');
         }
 
         const cities = JSON.parse(citiesText);
