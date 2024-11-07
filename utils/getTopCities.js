@@ -5,10 +5,10 @@ async function getTopCities(country, numberOfCities = 3) {
 
     const prompt = `
         Proporciona una lista en formato JSON de las ${numberOfCities} ciudades más importantes de ${country}. 
-        Para cada ciudad, proporciona el nombre en español (en minúsculas y sin acentos) y en inglés (con la primera letra en mayúscula). 
+        Para cada ciudad, proporciona el nombre en español (en minúsculas y sin acentos) y en inglés (quiero la IATA de la ciudad, por ejemplo MAD). 
         La respuesta debe ser un array JSON de objetos con la estructura:
         [
-            { "spanish": "nombre en español sin acentos y en minúsculas", "english": "Nombre en inglés con la primera letra en mayúscula" },
+            { "spanish": "nombre en español sin acentos y en minúsculas", "english": "IATA en mayusculas" },
             ...
         ]
     `;

@@ -20,7 +20,7 @@ async function generateItinerary(userData) {
         for (const [city, hotels] of Object.entries(userData.hotelsPerCity)) {
             hotelsDescription += `\n**${city}:**\n`;
             hotels.forEach((hotel, index) => {
-                hotelsDescription += `${index + 1}. ${hotel.name} - ${hotel.address} - ${hotel.price}\n`;
+                hotelsDescription += `${index + 1}. ${hotel.name} - ${hotel.address} - Rating: ${hotel.rating}\n`;
             });
         }
     }

@@ -1,55 +1,83 @@
-const Amadeus = require('amadeus');
+const axios = require('axios');
+const Hotel = require('../models/Hotel');
 
-const amadeus = new Amadeus({
-    clientId: process.env.AMADEUS_API_KEY,
-    clientSecret: process.env.AMADEUS_API_SECRET,
-    hostname: 'test' // se tiene que cambiar a production para que funcione
-});
-
-async function fetchAmadeusHotels(city, checkInDate, checkOutDate, numHotels = 5) {
+async function fetchAmadeusHotels(cityCode,numHotels) {
     try {
-        const citySearchResponse = await amadeus.referenceData.locations.get({
-            keyword: city,
-            subType: 'CITY'
-        });
+        let hotelsInDB = await Hotel.find({ cityCode });
 
-        if (citySearchResponse.status !== 200 || citySearchResponse.data.length === 0) {
-            throw new Error(`No se encontró el código IATA para la ciudad "${city}".`);
-        }
+        if (hotelsInDB.length >= numHotels) {
+            hotelsInDB = shuffleArray(hotelsInDB).slice(0, numHotels);
+            return hotelsInDB;
+        } else {
+            const token = await getAmadeusToken();
 
-        const cityCode = citySearchResponse.data[0].iataCode;
+            const response = await axios.get(`https://api.amadeus.com/v1/reference-data/locations/hotels/by-city`, {
+                params: { cityCode },
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
 
-        const hotelsResponse = await amadeus.shopping.hotelOffers.get({
-            cityCode: cityCode,
-            checkInDate: checkInDate,
-            checkOutDate: checkOutDate,
-            adults: 1,
-            roomQuantity: 1,
-        });
+            const hotelsData = response.data.data;
 
-        if (hotelsResponse.status !== 200 || hotelsResponse.data.length === 0) {
-            throw new Error(`No se encontraron hoteles para la ciudad "${city}".`);
-        }
+            if (!hotelsData || hotelsData.length === 0) {
+                throw new Error(`No se encontraron hoteles para la ciudad con código IATA "${cityCode}".`);
+            }
 
-        const hotels = hotelsResponse.data.slice(0, numHotels).map(hotelOffer => {
-            const hotel = hotelOffer.hotel;
-            return {
+            const hotelDocs = hotelsData.map((hotel) => ({
+                hotelId: hotel.hotelId,
                 name: hotel.name,
-                address: hotel.address.lines.join(', ') + ', ' + hotel.address.cityName,
+                address: hotel.address.lines ? hotel.address.lines.join(', ') : 'No disponible',
                 rating: hotel.rating || 'No disponible',
-                amenities: hotel.amenities ? hotel.amenities.join(', ') : 'No disponible',
-                price: hotelOffer.offers[0].price.total + ' ' + hotelOffer.offers[0].price.currency,
-                checkInDate: hotelOffer.offers[0].checkInDate,
-                checkOutDate: hotelOffer.offers[0].checkOutDate,
-                roomType: hotelOffer.offers[0].room.typeEstimated ? hotelOffer.offers[0].room.typeEstimated.category : 'No especificado'
-            };
-        });
+                amenities: hotel.amenities || [],
+                price: 'No disponible',
+                cityCode: hotel.iataCode,
+                geoCode: hotel.geoCode || {},
+                lastUpdate: hotel.lastUpdate ? new Date(hotel.lastUpdate) : null,
+            }));
 
-        return hotels;
+            await Hotel.insertMany(hotelDocs);
+
+            hotelsInDB = shuffleArray(hotelDocs).slice(0, numHotels);
+            return hotelsInDB;
+        }
     } catch (error) {
-        console.error(`Error al obtener hoteles para la ciudad "${city}":`, error.message);
+        console.error(`Error al obtener hoteles para el código IATA "${cityCode}":`, error.message);
         return [];
     }
+}
+
+async function getAmadeusToken() {
+    try {
+        const params = new URLSearchParams();
+        params.append('grant_type', 'client_credentials');
+        params.append('client_id', process.env.AMADEUS_API_KEY);
+        params.append('client_secret', process.env.AMADEUS_API_SECRET);
+
+        const response = await axios.post('https://api.amadeus.com/v1/security/oauth2/token', params, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
+
+        return response.data.access_token;
+    } catch (error) {
+        if (error.response) {
+            console.error('Error al obtener el token de Amadeus:', error.response.data);
+        } else {
+            console.error('Error al obtener el token de Amadeus:', error.message);
+        }
+        throw new Error('No se pudo obtener el token de Amadeus.');
+    }
+}
+
+function shuffleArray(array) {
+    const arr = array.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
 }
 
 module.exports = fetchAmadeusHotels;

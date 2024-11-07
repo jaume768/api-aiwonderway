@@ -69,8 +69,8 @@ exports.createTrip = async (req, res) => {
 
         for (const cityObj of topCities) {
             const citySpanish = cityObj.spanish;
-            const cityEnglish = cityObj.english;
-
+            const cityCode = cityObj.english;
+        
             try {
                 const activities = await fetchCivitatisActivities(citySpanish, 5);
                 activitiesPerCity[citySpanish] = activities;
@@ -78,15 +78,12 @@ exports.createTrip = async (req, res) => {
                 console.error(`Error al obtener actividades para la ciudad "${citySpanish}":`, activityError.message);
                 activitiesPerCity[citySpanish] = [];
             }
-
+        
             try {
-                const checkInDate = moment(travelDates.startDate).format('YYYY-MM-DD');
-                const checkOutDate = moment(travelDates.endDate).format('YYYY-MM-DD');
-
-                const hotels = await fetchAmadeusHotels(cityEnglish, checkInDate, checkOutDate, 5);
+                const hotels = await fetchAmadeusHotels(cityCode, 4);
                 hotelsPerCity[citySpanish] = hotels;
             } catch (hotelError) {
-                console.error(`Error al obtener hoteles para la ciudad "${cityEnglish}":`, hotelError.message);
+                console.error(`Error al obtener hoteles para la ciudad con código IATA "${cityCode}":`, hotelError.message);
                 hotelsPerCity[citySpanish] = [];
             }
         }
