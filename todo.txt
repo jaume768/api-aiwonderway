@@ -12,17 +12,13 @@ Sugerencias personalizadas:
         Implementa un motor de recomendaciones que sugiera destinos, 
         actividades o itinerarios basados en las preferencias y el historial de viajes del usuario.
 
-Gestión de documentos de viaje:
-        Permite a los usuarios almacenar de forma segura 
-        copias digitales de sus pasaportes, visados, tarjetas de embarque, etc.
-
-Modo offline:
+Modo offline (Ser usuario premium,pro o vip):
         Proporciona la opción de descargar los itinerarios 
         para acceder a ellos sin conexión a internet durante el viaje.
 
 Integración de Pagos: 
         Si planeas ofrecer servicios premium, podrías integrar un sistema de pagos seguro para suscripciones 
-        o compras dentro de la aplicación.  
+        o compras dentro de la aplicación (mirar como funciona KLING ai para inspiración de precios).  
 
 Editar Perfil del usuario:
         Implementar endpoints para que el usuario pueda ver y editar su información del perfil.
@@ -32,3 +28,7 @@ Soporte Multilingüe:
         atrayendo a una audiencia más global.
 
 Comprobación de que el usuario ha hecho el intinerario (con fotos o videos o alguna otra idea)
+
+Gestión de documentos de viaje:
+        Permite a los usuarios almacenar de forma segura 
+        copias digitales de sus pasaportes, visados, tarjetas de embarque, etc.
