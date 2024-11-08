@@ -275,3 +275,59 @@ exports.deleteCustomList = async (req, res) => {
         res.status(500).send('Error del servidor');
     }
 };
+
+exports.getCustomLists = async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const user = await User.findById(userId).populate({
+            path: 'customLists.trips',
+            populate: { path: 'createdBy', select: 'username' }, // Opcional: información del creador
+        });
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        res.json({ customLists: user.customLists });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+exports.editCustomListName = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { listId, newName } = req.body;
+
+        if (!newName || newName.trim() === '') {
+            return res.status(400).json({ msg: 'El nuevo nombre de la lista es requerido' });
+        }
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        const customList = user.customLists.id(listId);
+
+        if (!customList) {
+            return res.status(404).json({ msg: 'Lista personalizada no encontrada' });
+        }
+
+        // Verificar si ya existe una lista con el nuevo nombre
+        if (user.customLists.some((list) => list.name === newName && list._id.toString() !== listId)) {
+            return res.status(400).json({ msg: 'Ya existe una lista con ese nombre' });
+        }
+
+        customList.name = newName.trim();
+        await user.save();
+
+        res.json({ msg: 'Nombre de la lista personalizado actualizado exitosamente' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};

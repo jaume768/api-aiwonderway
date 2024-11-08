@@ -20,5 +20,6 @@ router.post('/custom-lists/add-trip', authMiddleware, userController.addTripToCu
 router.post('/custom-lists/remove-trip', authMiddleware, userController.removeTripFromCustomList);
 router.post('/custom-lists/delete', authMiddleware, userController.deleteCustomList);
 router.get('/custom-lists', authMiddleware, userController.getCustomLists);
+router.post('/custom-lists/edit-name', authMiddleware, userController.editCustomListName);
 
 module.exports = router;
