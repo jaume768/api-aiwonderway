@@ -45,4 +45,56 @@ exports.getCommentsForTrip = async (req, res) => {
     }
 };
 
-// falten endpoints de eliminar y editar commentaris
+exports.updateComment = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { commentId } = req.params;
+        const { content } = req.body;
+
+        const comment = await Comment.findById(commentId);
+
+        if (!comment) {
+            return res.status(404).json({ msg: 'Comentario no encontrado' });
+        }
+
+        if (comment.user.toString() !== userId) {
+            return res.status(403).json({ msg: 'No tienes permiso para editar este comentario' });
+        }
+
+        comment.content = content;
+        await comment.save();
+
+        res.json(comment);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+exports.deleteComment = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { commentId } = req.params;
+
+        const comment = await Comment.findById(commentId);
+
+        if (!comment) {
+            return res.status(404).json({ msg: 'Comentario no encontrado' });
+        }
+
+        if (comment.user.toString() !== userId) {
+            return res.status(403).json({ msg: 'No tienes permiso para eliminar este comentario' });
+        }
+
+        await comment.remove();
+
+        await Trip.findByIdAndUpdate(comment.trip, {
+            $pull: { comments: commentId },
+        });
+
+        res.json({ msg: 'Comentario eliminado' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};

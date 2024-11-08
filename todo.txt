@@ -3,15 +3,6 @@ Integración con APIs Externas:
         o con servicios de reserva para permitir a los usuarios reservar alojamiento o actividades directamente desde la app.
 
         (s'ha integrat mas o menos, he utilitzat s'api de amadeus per conseguir hotels i recomenarlos depenguent de sa ciutat que se recomana)
-
-Administración y moderación:
-        Falta agregar más endpoints.
-
-Sistema de reseñas y calificaciones:
-        Falta agregar más endpoints.
-
-Comentarios en itinerarios:
-        Falta agregar más endpoints.    
         
 Colaboración en itinerarios:
         Permite que múltiples usuarios puedan colaborar en la creación 
