@@ -2,6 +2,14 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
+const customListSchema = new Schema(
+    {
+        name: { type: String, required: true },
+        trips: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
+    },
+    { _id: true }
+);
+
 const userSchema = new Schema(
     {
         username: { type: String, required: true, unique: true },
@@ -10,6 +18,7 @@ const userSchema = new Schema(
         friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         favorites: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
+        customLists: [customListSchema],
         trips: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
         travelPreferences: {
             travelDates: {

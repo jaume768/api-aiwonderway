@@ -162,3 +162,116 @@ exports.getFriendRequests = async (req, res) => {
         res.status(500).send('Error del servidor');
     }
 };
+
+exports.createCustomList = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { name } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ msg: 'El nombre de la lista es requerido' });
+        }
+
+        const user = await User.findById(userId);
+
+        if (user.customLists.some((list) => list.name === name)) {
+            return res.status(400).json({ msg: 'Ya existe una lista con ese nombre' });
+        }
+
+        user.customLists.push({ name, trips: [] });
+        await user.save();
+
+        res.json({ msg: 'Lista personalizada creada exitosamente' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+exports.addTripToCustomList = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { listId, tripId } = req.body;
+
+        const user = await User.findById(userId);
+        const customList = user.customLists.id(listId);
+
+        if (!customList) {
+            return res.status(404).json({ msg: 'Lista personalizada no encontrada' });
+        }
+
+        // Verificar que el itinerario existe y el usuario tiene acceso
+        const trip = await Trip.findOne({
+            _id: tripId,
+            $or: [
+                { public: true },
+                { createdBy: userId },
+                { createdBy: { $in: user.friends } },
+            ],
+        });
+
+        if (!trip) {
+            return res.status(404).json({ msg: 'Itinerario no encontrado o no tienes acceso' });
+        }
+
+        if (customList.trips.includes(tripId)) {
+            return res.status(400).json({ msg: 'El itinerario ya está en la lista' });
+        }
+
+        customList.trips.push(tripId);
+        await user.save();
+
+        res.json({ msg: 'Itinerario agregado a la lista personalizada' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+exports.removeTripFromCustomList = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { listId, tripId } = req.body;
+
+        const user = await User.findById(userId);
+        const customList = user.customLists.id(listId);
+
+        if (!customList) {
+            return res.status(404).json({ msg: 'Lista personalizada no encontrada' });
+        }
+
+        if (!customList.trips.includes(tripId)) {
+            return res.status(400).json({ msg: 'El itinerario no está en la lista' });
+        }
+
+        customList.trips = customList.trips.filter((id) => id.toString() !== tripId);
+        await user.save();
+
+        res.json({ msg: 'Itinerario eliminado de la lista personalizada' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+exports.deleteCustomList = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { listId } = req.body;
+
+        const user = await User.findById(userId);
+        const customList = user.customLists.id(listId);
+
+        if (!customList) {
+            return res.status(404).json({ msg: 'Lista personalizada no encontrada' });
+        }
+
+        customList.remove();
+        await user.save();
+
+        res.json({ msg: 'Lista personalizada eliminada exitosamente' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
