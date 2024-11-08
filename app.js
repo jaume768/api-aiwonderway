@@ -16,11 +16,17 @@ app.use(cors());
 const authRoutes = require('./routes/auth');
 const tripRoutes = require('./routes/trips');
 const userRoutes = require('./routes/users');
+const reviewRoutes = require('./routes/reviews');
+const adminRoutes = require('./routes/admin');
+const commentRoutes = require('./routes/comments');
 
 // Rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api', reviewRoutes);
+app.use('/api', commentRoutes);
 
 // Conexión a MongoDB
 mongoose

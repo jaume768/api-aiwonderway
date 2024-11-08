@@ -9,6 +9,8 @@ const tripSchema = new Schema(
         description: { type: String, required: true },
         itinerary: { type: Schema.Types.Mixed, required: true }, // Guardar como objeto JSON
         public: { type: Boolean, default: true },
+        reviews: [{ type: Schema.Types.ObjectId, ref: 'Review' }],
+        comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
         travelDates: {
             startDate: { type: Date, required: true },
             endDate: { type: Date, required: true },

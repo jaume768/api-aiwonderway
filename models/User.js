@@ -18,6 +18,12 @@ const userSchema = new Schema(
         friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         favorites: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
+        role: {
+            type: String,
+            enum: ['admin', 'premium', 'user'],
+            default: 'user',
+            required: true,
+        },
         customLists: [customListSchema],
         trips: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
         travelPreferences: {
