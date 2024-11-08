@@ -3,25 +3,9 @@ Integración con APIs Externas:
         o con servicios de reserva para permitir a los usuarios reservar alojamiento o actividades directamente desde la app.
 
         (s'ha integrat mas o menos, he utilitzat s'api de amadeus per conseguir hotels i recomenarlos depenguent de sa ciutat que se recomana)
-        
-Colaboración en itinerarios:
-        Permite que múltiples usuarios puedan colaborar en la creación 
-        y edición de un itinerario, ideal para viajes en grupo.         
-
-Sugerencias personalizadas:
-        Implementa un motor de recomendaciones que sugiera destinos, 
-        actividades o itinerarios basados en las preferencias y el historial de viajes del usuario.
-
-Modo offline (Ser usuario premium,pro o vip):
-        Proporciona la opción de descargar los itinerarios 
-        para acceder a ellos sin conexión a internet durante el viaje.
-
 Integración de Pagos: 
         Si planeas ofrecer servicios premium, podrías integrar un sistema de pagos seguro para suscripciones 
         o compras dentro de la aplicación (mirar como funciona KLING ai para inspiración de precios).  
-
-Editar Perfil del usuario:
-        Implementar endpoints para que el usuario pueda ver y editar su información del perfil.
 
 Soporte Multilingüe: 
         Amplía el alcance de tu aplicación permitiendo que sea utilizada en varios idiomas, 

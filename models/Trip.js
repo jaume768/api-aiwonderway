@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 const tripSchema = new Schema(
     {
         createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        collaborators: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         title: { type: String, required: true },
         description: { type: String, required: true },
         itinerary: { type: Schema.Types.Mixed, required: true }, // Guardar como objeto JSON

@@ -3,6 +3,9 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 
+router.get('/profile', authMiddleware, userController.getProfile);
+router.put('/profile', authMiddleware, userController.updateProfile);
+
 // Amigos
 router.post('/add-friend', authMiddleware, userController.addFriend);
 router.post('/accept-friend', authMiddleware, userController.acceptFriendRequest);
@@ -21,5 +24,8 @@ router.post('/custom-lists/remove-trip', authMiddleware, userController.removeTr
 router.post('/custom-lists/delete', authMiddleware, userController.deleteCustomList);
 router.get('/custom-lists', authMiddleware, userController.getCustomLists);
 router.post('/custom-lists/edit-name', authMiddleware, userController.editCustomListName);
+
+// Cargar intinerarios recomendados
+router.get('/recomendations', authMiddleware, recommendationController.getRecommendations);
 
 module.exports = router;

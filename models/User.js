@@ -17,6 +17,8 @@ const userSchema = new Schema(
         password: { type: String, required: true },
         friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+        profilePicture: { type: String },
+        bio: { type: String },
         favorites: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
         role: {
             type: String,

@@ -331,3 +331,72 @@ exports.editCustomListName = async (req, res) => {
         res.status(500).send('Error del servidor');
     }
 };
+
+
+exports.getProfile = async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const user = await User.findById(userId).select('-password -friends -friendRequests -trips');
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        res.json({ profile: user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+exports.updateProfile = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { username, email, bio, profilePicture, travelPreferences } = req.body;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        if (username) user.username = username;
+        if (email) user.email = email;
+        if (bio) user.bio = bio;
+        if (profilePicture) user.profilePicture = profilePicture;
+        if (travelPreferences) user.travelPreferences = travelPreferences;
+
+        await user.save();
+
+        res.json({ msg: 'Perfil actualizado exitosamente', profile: user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+exports.getRecommendations = async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        const { interests, travelPreferences } = user;
+
+        const recommendedTrips = await Trip.find({
+            public: true,
+            interests: { $in: interests },
+            'destinationPreferences.type': travelPreferences.destinationPreferences.type,
+        }).limit(10);
+
+        res.json({ recommendations: recommendedTrips });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
