@@ -26,6 +26,6 @@ router.get('/custom-lists', authMiddleware, userController.getCustomLists);
 router.post('/custom-lists/edit-name', authMiddleware, userController.editCustomListName);
 
 // Cargar intinerarios recomendados
-router.get('/recomendations', authMiddleware, recommendationController.getRecommendations);
+router.get('/recomendations', authMiddleware, userController.getRecommendations);
 
 module.exports = router;
