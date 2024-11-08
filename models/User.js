@@ -20,7 +20,7 @@ const userSchema = new Schema(
         favorites: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
         role: {
             type: String,
-            enum: ['admin', 'premium', 'user'],
+            enum: ['admin', 'premium', 'pro', 'vip', 'user'],
             default: 'user',
             required: true,
         },
