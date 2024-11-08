@@ -8,12 +8,12 @@ Sistema de Roles y Permisos:
         Implementa diferentes niveles de acceso (administradores, usuarios premium, usuarios vip, usuarios normales, usuarios no registrados) -> (primera idea) 
         con permisos específicos para cada rol.
 
-Personalizadas: 
-       Permite que los usuarios puedan hacer listas personalizadas de los intinerarios que le hayan gustado ("viajes de negocios", "viajas de lujo"...).
-
 Integración de Pagos: 
         Si planeas ofrecer servicios premium, podrías integrar un sistema de pagos seguro para suscripciones 
-        o compras dentro de la aplicación.
+        o compras dentro de la aplicación.  
+
+Editar Perfil del usuario:
+        Implementar endpoints para que el usuario pueda ver y editar su información del perfil.
 
 Soporte Multilingüe: 
         Amplía el alcance de tu aplicación permitiendo que sea utilizada en varios idiomas, 
