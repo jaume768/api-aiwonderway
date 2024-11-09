@@ -11,7 +11,7 @@ Soporte Multilingüe:
         Amplía el alcance de tu aplicación permitiendo que sea utilizada en varios idiomas, 
         atrayendo a una audiencia más global.
 
-Comprobación de que el usuario ha hecho el intinerario (con fotos o videos o alguna otra idea)
+Comprobación de que el usuario ha hecho el intinerario (con fotos o videos o geolocalización)
 
 Gestión de documentos de viaje:
         Permite a los usuarios almacenar de forma segura 
