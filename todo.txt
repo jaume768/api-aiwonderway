@@ -7,7 +7,7 @@ Integración con APIs Externas:
 Integración de Pagos: 
         Falta crear la cuenta en google play console y crear las suscripciones y productos.  
 
-Verificación de cuenta del usuario por email al registrarse.     
+Verificación de cuenta del usuario por email al registrarse (Nodemailer).     
 
 Falta hacer la verificación de los pagos del usuario.
 Falta hacer que se descuenten creditos al crear el intinerario
@@ -20,4 +20,4 @@ Comprobación de que el usuario ha hecho el intinerario (con fotos o videos o ge
 
 Gestión de documentos de viaje (para usuarios premium, pro o vip):
         Permite a los usuarios almacenar de forma segura 
-        copias digitales de sus pasaportes, visados, tarjetas de embarque, etc.
+        copias digitales de sus pasaportes, visados, tarjetas de embarque, etc.4
