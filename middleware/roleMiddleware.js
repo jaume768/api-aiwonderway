@@ -3,9 +3,11 @@ module.exports = function (requiredRole) {
         const userRole = req.userRole;
 
         const rolesHierarchy = {
-            user: 1,
+            free: 1,
             premium: 2,
-            admin: 3,
+            pro: 3,
+            vip: 4,
+            admin: 5,
         };
 
         if (rolesHierarchy[userRole] >= rolesHierarchy[requiredRole]) {

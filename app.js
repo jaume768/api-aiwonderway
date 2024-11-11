@@ -18,7 +18,9 @@ const tripRoutes = require('./routes/trips');
 const userRoutes = require('./routes/users');
 const reviewRoutes = require('./routes/reviews');
 const adminRoutes = require('./routes/admin');
+const paymentRoutes = require('./routes/paymentRoutes');
 const commentRoutes = require('./routes/comments');
+const { checkUserSubscriptions } = require('./utils/scheduler');
 
 // Rutas
 app.use('/api/auth', authRoutes);
@@ -27,6 +29,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', reviewRoutes);
 app.use('/api', commentRoutes);
+app.use('/api/payments', paymentRoutes);
+
+checkUserSubscriptions();
 
 // Conexión a MongoDB
 mongoose

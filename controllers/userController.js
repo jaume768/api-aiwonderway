@@ -6,15 +6,33 @@ exports.addFriend = async (req, res) => {
         const userId = req.userId;
         const { friendId } = req.body;
 
-        const user = await User.findById(userId);
-        const friend = await User.findById(friendId);
-
-        if (!friend) return res.status(404).json({ msg: 'Usuario no encontrado' });
-
-        if (!friend.friendRequests.includes(userId)) {
-            friend.friendRequests.push(userId);
-            await friend.save();
+        if (userId === friendId) {
+            return res.status(400).json({ msg: 'No puedes enviarte una solicitud de amistad a ti mismo' });
         }
+
+        const [user, friend] = await Promise.all([
+            User.findById(userId),
+            User.findById(friendId)
+        ]);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        if (!friend) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        if (user.friends.includes(friendId)) {
+            return res.status(400).json({ msg: 'Ya son amigos' });
+        }
+
+        if (friend.friendRequests.some(id => id.toString() === userId)) {
+            return res.status(400).json({ msg: 'Ya has enviado una solicitud de amistad a este usuario' });
+        }
+
+        friend.friendRequests.push(userId);
+        await friend.save();
 
         res.json({ msg: 'Solicitud de amistad enviada' });
     } catch (err) {
@@ -24,28 +42,50 @@ exports.addFriend = async (req, res) => {
 };
 
 exports.acceptFriendRequest = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const userId = req.userId;
         const { requestId } = req.body;
 
-        const user = await User.findById(userId);
-        const requester = await User.findById(requestId);
-
-        if (!requester) return res.status(404).json({ msg: 'Usuario no encontrado' });
-
-        if (user.friendRequests.includes(requestId)) {
-            user.friendRequests = user.friendRequests.filter((id) => id.toString() !== requestId);
-            user.friends.push(requestId);
-            await user.save();
-
-            requester.friends.push(userId);
-            await requester.save();
-
-            res.json({ msg: 'Solicitud de amistad aceptada' });
-        } else {
-            res.status(400).json({ msg: 'No hay solicitud de amistad de este usuario' });
+        if (userId === requestId) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ msg: 'No puedes aceptar una solicitud de amistad de ti mismo' });
         }
+
+        const [user, requester] = await Promise.all([
+            User.findById(userId).session(session),
+            User.findById(requestId).session(session)
+        ]);
+
+        if (!user || !requester) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        if (!user.friendRequests.some(id => id.toString() === requestId)) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({ msg: 'No hay solicitud de amistad de este usuario' });
+        }
+
+        user.friendRequests = user.friendRequests.filter(id => id.toString() !== requestId);
+
+        user.friends.addToSet(requestId);
+        requester.friends.addToSet(userId);
+
+        await user.save({ session });
+        await requester.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.json({ msg: 'Solicitud de amistad aceptada' });
     } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
         console.error(err);
         res.status(500).send('Error del servidor');
     }
@@ -56,12 +96,21 @@ exports.addFavoriteTrip = async (req, res) => {
         const userId = req.userId;
         const { tripId } = req.body;
 
+        const user = await User.findById(userId).select('friends favorites');
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        if (user.favorites.some(id => id.toString() === tripId)) {
+            return res.status(400).json({ msg: 'El itinerario ya está en favoritos' });
+        }
+
         const trip = await Trip.findOne({
             _id: tripId,
             $or: [
                 { public: true },
                 { createdBy: userId },
-                { createdBy: { $in: (await User.findById(userId)).friends } },
+                { createdBy: { $in: user.friends } },
             ],
         });
 
@@ -69,13 +118,7 @@ exports.addFavoriteTrip = async (req, res) => {
             return res.status(404).json({ msg: 'Itinerario no encontrado o no tienes acceso' });
         }
 
-        const user = await User.findById(userId);
-
-        if (user.favorites.includes(tripId)) {
-            return res.status(400).json({ msg: 'El itinerario ya está en favoritos' });
-        }
-
-        user.favorites.push(tripId);
+        user.favorites.addToSet(tripId);
         await user.save();
 
         res.json({ msg: 'Itinerario agregado a favoritos' });
@@ -90,13 +133,16 @@ exports.removeFavoriteTrip = async (req, res) => {
         const userId = req.userId;
         const { tripId } = req.body;
 
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).select('favorites');
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
 
-        if (!user.favorites.includes(tripId)) {
+        if (!user.favorites.some(id => id.toString() === tripId)) {
             return res.status(400).json({ msg: 'El itinerario no está en favoritos' });
         }
 
-        user.favorites = user.favorites.filter((id) => id.toString() !== tripId);
+        user.favorites = user.favorites.filter(id => id.toString() !== tripId);
         await user.save();
 
         res.json({ msg: 'Itinerario eliminado de favoritos' });
@@ -106,20 +152,28 @@ exports.removeFavoriteTrip = async (req, res) => {
     }
 };
 
+// falta incluir paginación, ahora hay un apaño
 exports.getFavoriteTrips = async (req, res) => {
     try {
         const userId = req.userId;
+        const { page = 1, limit = 20 } = req.query;
 
-        const user = await User.findById(userId).populate({
-            path: 'favorites',
-            populate: { path: 'createdBy', select: 'username' },
-        });
+        const user = await User.findById(userId)
+            .populate({
+                path: 'favorites',
+                populate: { path: 'createdBy', select: 'username' },
+                options: {
+                    skip: (page - 1) * limit,
+                    limit: parseInt(limit),
+                }
+            })
+            .select('favorites');
 
         if (!user) {
             return res.status(404).json({ msg: 'Usuario no encontrado' });
         }
 
-        res.json({ favorites: user.favorites });
+        res.json({ favorites: user.favorites, page: parseInt(page), limit: parseInt(limit) });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error del servidor');
@@ -132,17 +186,32 @@ exports.getFriendTrips = async (req, res) => {
         const userId = req.userId;
         const { friendId } = req.params;
 
-        const user = await User.findById(userId);
-        const friend = await User.findById(friendId);
-
-        if (!friend) return res.status(404).json({ msg: 'Usuario no encontrado' });
-
-        if (user.friends.includes(friendId)) {
-            const trips = await Trip.find({ createdBy: friendId });
-            res.json(trips);
-        } else {
-            res.status(403).json({ msg: 'No eres amigo de este usuario' });
+        if (userId === friendId) {
+            return res.status(400).json({ msg: 'No puedes obtener tus propios viajes a través de esta ruta' });
         }
+
+        const [user, friend] = await Promise.all([
+            User.findById(userId).select('friends'),
+            User.findById(friendId)
+        ]);
+
+        if (!user || !friend) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        if (!user.friends.some(id => id.toString() === friendId)) {
+            return res.status(403).json({ msg: 'No eres amigo de este usuario' });
+        }
+
+        const trips = await Trip.find({
+            createdBy: friendId,
+            $or: [
+                { public: true },
+                { createdBy: userId }
+            ]
+        });
+
+        res.json(trips);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error del servidor');
@@ -152,11 +221,22 @@ exports.getFriendTrips = async (req, res) => {
 exports.getFriendRequests = async (req, res) => {
     try {
         const userId = req.userId;
-        const user = await User.findById(userId).populate('friendRequests', 'username email');
+        const { page = 1, limit = 20 } = req.query;
+
+        const user = await User.findById(userId)
+            .populate({
+                path: 'friendRequests',
+                select: 'username email',
+                options: {
+                    skip: (page - 1) * limit,
+                    limit: parseInt(limit),
+                }
+            })
+            .select('friendRequests');
 
         if (!user) return res.status(404).json({ msg: 'Usuario no encontrado' });
 
-        res.json({ friendRequests: user.friendRequests });
+        res.json({ friendRequests: user.friendRequests, page: parseInt(page), limit: parseInt(limit) });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error del servidor');
@@ -164,25 +244,43 @@ exports.getFriendRequests = async (req, res) => {
 };
 
 exports.createCustomList = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const userId = req.userId;
-        const { name } = req.body;
+        let { name } = req.body;
 
-        if (!name) {
+        if (!name || !name.trim()) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ msg: 'El nombre de la lista es requerido' });
         }
 
-        const user = await User.findById(userId);
+        name = name.trim();
 
-        if (user.customLists.some((list) => list.name === name)) {
+        const user = await User.findById(userId).session(session);
+        if (!user) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        if (user.customLists.some(list => list.name.toLowerCase() === name.toLowerCase())) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ msg: 'Ya existe una lista con ese nombre' });
         }
 
         user.customLists.push({ name, trips: [] });
-        await user.save();
+        await user.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         res.json({ msg: 'Lista personalizada creada exitosamente' });
     } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
         console.error(err);
         res.status(500).send('Error del servidor');
     }
@@ -193,14 +291,20 @@ exports.addTripToCustomList = async (req, res) => {
         const userId = req.userId;
         const { listId, tripId } = req.body;
 
-        const user = await User.findById(userId);
-        const customList = user.customLists.id(listId);
+        const user = await User.findById(userId).select('customLists friends favorites');
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
 
+        const customList = user.customLists.id(listId);
         if (!customList) {
             return res.status(404).json({ msg: 'Lista personalizada no encontrada' });
         }
 
-        // Verificar que el itinerario existe y el usuario tiene acceso
+        if (customList.trips.some(id => id.toString() === tripId)) {
+            return res.status(400).json({ msg: 'El itinerario ya está en la lista' });
+        }
+
         const trip = await Trip.findOne({
             _id: tripId,
             $or: [
@@ -214,11 +318,7 @@ exports.addTripToCustomList = async (req, res) => {
             return res.status(404).json({ msg: 'Itinerario no encontrado o no tienes acceso' });
         }
 
-        if (customList.trips.includes(tripId)) {
-            return res.status(400).json({ msg: 'El itinerario ya está en la lista' });
-        }
-
-        customList.trips.push(tripId);
+        customList.trips.addToSet(tripId);
         await user.save();
 
         res.json({ msg: 'Itinerario agregado a la lista personalizada' });
@@ -233,18 +333,21 @@ exports.removeTripFromCustomList = async (req, res) => {
         const userId = req.userId;
         const { listId, tripId } = req.body;
 
-        const user = await User.findById(userId);
-        const customList = user.customLists.id(listId);
+        const user = await User.findById(userId).select('customLists');
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
 
+        const customList = user.customLists.id(listId);
         if (!customList) {
             return res.status(404).json({ msg: 'Lista personalizada no encontrada' });
         }
 
-        if (!customList.trips.includes(tripId)) {
+        if (!customList.trips.some(id => id.toString() === tripId)) {
             return res.status(400).json({ msg: 'El itinerario no está en la lista' });
         }
 
-        customList.trips = customList.trips.filter((id) => id.toString() !== tripId);
+        customList.trips = customList.trips.filter(id => id.toString() !== tripId);
         await user.save();
 
         res.json({ msg: 'Itinerario eliminado de la lista personalizada' });
@@ -259,9 +362,12 @@ exports.deleteCustomList = async (req, res) => {
         const userId = req.userId;
         const { listId } = req.body;
 
-        const user = await User.findById(userId);
-        const customList = user.customLists.id(listId);
+        const user = await User.findById(userId).select('customLists');
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
 
+        const customList = user.customLists.id(listId);
         if (!customList) {
             return res.status(404).json({ msg: 'Lista personalizada no encontrada' });
         }
@@ -280,10 +386,13 @@ exports.getCustomLists = async (req, res) => {
     try {
         const userId = req.userId;
 
-        const user = await User.findById(userId).populate({
-            path: 'customLists.trips',
-            populate: { path: 'createdBy', select: 'username' }, // Opcional: información del creador
-        });
+        const user = await User.findById(userId)
+            .populate({
+                path: 'customLists.trips',
+                populate: { path: 'createdBy', select: 'username' },
+                select: 'title description createdBy'
+            })
+            .select('customLists');
 
         if (!user) {
             return res.status(404).json({ msg: 'Usuario no encontrado' });
@@ -297,36 +406,50 @@ exports.getCustomLists = async (req, res) => {
 };
 
 exports.editCustomListName = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const userId = req.userId;
-        const { listId, newName } = req.body;
+        let { listId, newName } = req.body;
 
-        if (!newName || newName.trim() === '') {
+        if (!newName || !newName.trim()) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ msg: 'El nuevo nombre de la lista es requerido' });
         }
 
-        const user = await User.findById(userId);
+        newName = newName.trim();
 
+        const user = await User.findById(userId).session(session);
         if (!user) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ msg: 'Usuario no encontrado' });
         }
 
         const customList = user.customLists.id(listId);
-
         if (!customList) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(404).json({ msg: 'Lista personalizada no encontrada' });
         }
 
-        // Verificar si ya existe una lista con el nuevo nombre
-        if (user.customLists.some((list) => list.name === newName && list._id.toString() !== listId)) {
+        if (user.customLists.some(list => list.name.toLowerCase() === newName.toLowerCase() && list._id.toString() !== listId)) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ msg: 'Ya existe una lista con ese nombre' });
         }
 
-        customList.name = newName.trim();
-        await user.save();
+        customList.name = newName;
+        await user.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         res.json({ msg: 'Nombre de la lista personalizado actualizado exitosamente' });
     } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
         console.error(err);
         res.status(500).send('Error del servidor');
     }
@@ -337,7 +460,13 @@ exports.getProfile = async (req, res) => {
     try {
         const userId = req.userId;
 
-        const user = await User.findById(userId).select('-password -friends -friendRequests -trips');
+        const user = await User.findById(userId)
+            .select('-password -friends -friendRequests -trips -paymentHistory -customLists')
+            .populate({
+                path: 'favorites',
+                select: 'title description createdBy',
+                populate: { path: 'createdBy', select: 'username' }
+            });
 
         if (!user) {
             return res.status(404).json({ msg: 'Usuario no encontrado' });
@@ -355,23 +484,53 @@ exports.updateProfile = async (req, res) => {
         const userId = req.userId;
         const { username, email, bio, profilePicture, travelPreferences } = req.body;
 
-        const user = await User.findById(userId);
+        const updateFields = {};
+
+        if (username) {
+            updateFields.username = username.trim();
+        }
+        if (email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ msg: 'Formato de email inválido' });
+            }
+            updateFields.email = email.trim();
+        }
+        if (bio) updateFields.bio = bio.trim();
+        if (profilePicture) updateFields.profilePicture = profilePicture.trim();
+        if (travelPreferences) updateFields.travelPreferences = travelPreferences;
+
+        if (username || email) {
+            const existingUser = await User.findOne({
+                $or: [
+                    { username: username ? username.trim() : undefined },
+                    { email: email ? email.trim() : undefined }
+                ],
+                _id: { $ne: userId }
+            });
+
+            if (existingUser) {
+                if (existingUser.username === username) {
+                    return res.status(400).json({ msg: 'El nombre de usuario ya está en uso' });
+                }
+                if (existingUser.email === email) {
+                    return res.status(400).json({ msg: 'El email ya está en uso' });
+                }
+            }
+        }
+
+        const user = await User.findByIdAndUpdate(userId, updateFields, { new: true, runValidators: true });
 
         if (!user) {
             return res.status(404).json({ msg: 'Usuario no encontrado' });
         }
 
-        if (username) user.username = username;
-        if (email) user.email = email;
-        if (bio) user.bio = bio;
-        if (profilePicture) user.profilePicture = profilePicture;
-        if (travelPreferences) user.travelPreferences = travelPreferences;
-
-        await user.save();
-
         res.json({ msg: 'Perfil actualizado exitosamente', profile: user });
     } catch (err) {
         console.error(err);
+        if (err.name === 'ValidationError') {
+            return res.status(400).json({ msg: err.message });
+        }
         res.status(500).send('Error del servidor');
     }
 };
@@ -380,19 +539,27 @@ exports.getRecommendations = async (req, res) => {
     try {
         const userId = req.userId;
 
-        const user = await User.findById(userId);
-
+        const user = await User.findById(userId).select('interests travelPreferences');
         if (!user) {
             return res.status(404).json({ msg: 'Usuario no encontrado' });
         }
 
         const { interests, travelPreferences } = user;
 
-        const recommendedTrips = await Trip.find({
+        if (!travelPreferences || !travelPreferences.destinationPreferences || !travelPreferences.destinationPreferences.type) {
+            return res.status(400).json({ msg: 'Preferencias de viaje incompletas' });
+        }
+
+        const filter = {
             public: true,
-            interests: { $in: interests },
+            interests: { $in: interests || [] },
             'destinationPreferences.type': travelPreferences.destinationPreferences.type,
-        }).limit(10);
+        };
+
+        const recommendedTrips = await Trip.find(filter)
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .populate('createdBy', 'username');
 
         res.json({ recommendations: recommendedTrips });
     } catch (err) {

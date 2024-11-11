@@ -10,6 +10,16 @@ const customListSchema = new Schema(
     { _id: true }
 );
 
+const paymentHistorySchema = new Schema({
+    productId: { type: String, required: true },
+    purchaseToken: { type: String, required: true },
+    purchaseDate: { type: Date, required: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, required: true },
+    transactionType: { type: String, enum: ['Subscription', 'CreditPurchase'], required: true },
+    status: { type: String, enum: ['Pending', 'Completed', 'Cancelled', 'Refunded'], default: 'Pending' },
+});
+
 const userSchema = new Schema(
     {
         username: { type: String, required: true, unique: true },
@@ -19,13 +29,16 @@ const userSchema = new Schema(
         friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         profilePicture: { type: String },
         bio: { type: String },
+        paymentHistory: [paymentHistorySchema],
         favorites: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
         role: {
             type: String,
-            enum: ['admin', 'premium', 'pro', 'vip', 'user'],
-            default: 'user',
+            enum: ['admin', 'premium', 'pro', 'vip', 'free'],
+            default: 'free',
             required: true,
         },
+        subscriptionExpiry: { type: Date },
+        credits: { type: Number, default: 0 },
         customLists: [customListSchema],
         trips: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],
         travelPreferences: {

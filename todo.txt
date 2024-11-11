@@ -3,9 +3,14 @@ Integración con APIs Externas:
         o con servicios de reserva para permitir a los usuarios reservar alojamiento o actividades directamente desde la app.
 
         (s'ha integrat mas o menos, he utilitzat s'api de amadeus per conseguir hotels i recomenarlos depenguent de sa ciutat que se recomana)
+
 Integración de Pagos: 
-        Si planeas ofrecer servicios premium, podrías integrar un sistema de pagos seguro para suscripciones 
-        o compras dentro de la aplicación (mirar como funciona KLING ai para inspiración de precios).  
+        Falta crear la cuenta en google play console y crear las suscripciones y productos.  
+
+Verificación de cuenta del usuario por email al registrarse.     
+
+Falta hacer la verificación de los pagos del usuario.
+Falta hacer que se descuenten creditos al crear el intinerario
 
 Soporte Multilingüe: 
         Amplía el alcance de tu aplicación permitiendo que sea utilizada en varios idiomas, 
@@ -13,6 +18,6 @@ Soporte Multilingüe:
 
 Comprobación de que el usuario ha hecho el intinerario (con fotos o videos o geolocalización)
 
-Gestión de documentos de viaje:
+Gestión de documentos de viaje (para usuarios premium, pro o vip):
         Permite a los usuarios almacenar de forma segura 
         copias digitales de sus pasaportes, visados, tarjetas de embarque, etc.
