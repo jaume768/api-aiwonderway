@@ -11,6 +11,5 @@ router.post('/add-credits', authMiddleware, paymentController.addCredits);
 router.get('/subscription-status', authMiddleware, paymentController.getSubscriptionStatus);
 router.get('/payment-history', authMiddleware, paymentController.getPaymentHistory);
 router.post('/create-subscription-session', authMiddleware, paymentController.createSubscriptionSession);
-router.post('/create-add-credits-session', authMiddleware, paymentController.createAddCreditsSession);
 
 module.exports = router;

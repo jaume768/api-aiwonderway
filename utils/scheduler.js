@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const User = require('./models/User');
+const User = require('../models/User');
 
 function checkUserSubscriptions() {
   cron.schedule('0 0 * * *', async () => {
