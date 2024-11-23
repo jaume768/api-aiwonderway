@@ -1,4 +1,5 @@
 const axios = require('axios');
+const qs = require('qs');
 const Hotel = require('../models/Hotel');
 
 let amadeusToken = null;
@@ -27,17 +28,23 @@ async function fetchAmadeusHotels(cityCode, numHotels = 4) {
                 throw new Error(`No se encontraron hoteles para la ciudad con código IATA "${cityCode}".`);
             }
 
-            const hotelDocs = hotelsData.map((hotel) => ({
-                hotelId: hotel.hotelId,
-                name: hotel.name,
-                address: hotel.address.lines ? hotel.address.lines.join(', ') : 'No disponible',
-                rating: hotel.rating || 'No disponible',
-                amenities: hotel.amenities || [],
-                price: 'No disponible',
-                cityCode: hotel.iataCode,
-                geoCode: hotel.geoCode || {},
-                lastUpdate: hotel.lastUpdate ? new Date(hotel.lastUpdate) : null,
-            }));
+            const hotelDocs = hotelsData.map((hotel) => {
+                if (!hotel.address || !Array.isArray(hotel.address.lines)) {
+                    console.warn(`Hotel con ID ${hotel.hotelId} tiene una dirección inválida:`, hotel.address);
+                }
+
+                return {
+                    hotelId: hotel.hotelId,
+                    name: hotel.name,
+                    address: Array.isArray(hotel.address?.lines) ? hotel.address.lines.join(', ') : 'No disponible',
+                    rating: hotel.rating || 'No disponible',
+                    amenities: hotel.amenities || [],
+                    price: 'No disponible',
+                    cityCode: hotel.iataCode,
+                    geoCode: hotel.geoCode || {},
+                    lastUpdate: hotel.lastUpdate ? new Date(hotel.lastUpdate) : null,
+                };
+            });
 
             await Hotel.insertMany(hotelDocs);
 
@@ -56,11 +63,15 @@ async function getAmadeusToken() {
     }
 
     try {
-        const response = await axios.post('https://api.amadeus.com/v1/security/oauth2/token', null, {
-            params: {
-                grant_type: 'client_credentials',
-                client_id: process.env.AMADEUS_API_KEY,
-                client_secret: process.env.AMADEUS_API_SECRET,
+        const requestBody = qs.stringify({
+            grant_type: 'client_credentials',
+            client_id: process.env.AMADEUS_API_KEY,
+            client_secret: process.env.AMADEUS_API_SECRET,
+        });
+
+        const response = await axios.post('https://api.amadeus.com/v1/security/oauth2/token', requestBody, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
         });
 
@@ -71,7 +82,7 @@ async function getAmadeusToken() {
 
         return amadeusToken;
     } catch (error) {
-        console.error('Error al obtener el token de Amadeus:', error.message);
+        console.error('Error al obtener el token de Amadeus:', error.response ? error.response.data : error.message);
         throw new Error('No se pudo obtener el token de Amadeus.');
     }
 }

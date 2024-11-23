@@ -3,6 +3,12 @@ const axios = require('axios');
 async function generateItinerary(userData) {
     const apiKey = process.env.OPENAI_API_KEY;
 
+    const interests = Array.isArray(userData.interests) ? userData.interests : [];
+    const amenities = Array.isArray(userData.accommodationPreferences?.amenities) ? userData.accommodationPreferences.amenities : [];
+    const cuisine = Array.isArray(userData.foodPreferences?.cuisine) ? userData.foodPreferences.cuisine : [];
+    const culinaryExperiences = Array.isArray(userData.foodPreferences?.culinaryExperiences) ? userData.foodPreferences.culinaryExperiences : [];
+    const ages = Array.isArray(userData.travelCompanion?.ages) ? userData.travelCompanion.ages : [];
+
     let activitiesDescription = '';
     if (userData.activitiesPerCity && Object.keys(userData.activitiesPerCity).length > 0) {
         activitiesDescription += 'Aquí tienes algunas actividades recomendadas para las ciudades principales:\n';
@@ -64,13 +70,13 @@ async function generateItinerary(userData) {
         - Distribución: ${userData.budget.allocation}
 
         **Intereses y Actividades:**
-        - ${userData.interests.join(', ')}
+        - ${interests.join(', ')}
 
         **Preferencias de Alojamiento:**
         - Tipo: ${userData.accommodationPreferences.type}
         - Nivel de lujo: ${userData.accommodationPreferences.stars}
         - Ubicación preferida: ${userData.accommodationPreferences.location}
-        - Servicios específicos: ${userData.accommodationPreferences.amenities.join(', ')}
+        - Servicios específicos: ${amenities.join(', ')}
 
         **Transporte:**
         - Medio preferido: ${userData.transportPreferences.preferredMode}
@@ -78,13 +84,13 @@ async function generateItinerary(userData) {
         - Necesidades especiales: ${userData.transportPreferences.specialNeeds || 'Ninguna'}
 
         **Comida y Dieta:**
-        - Tipos de cocina favoritas: ${userData.foodPreferences.cuisine.join(', ')}
+        - Tipos de cocina favoritas: ${cuisine.join(', ')}
         - Restricciones dietéticas: ${userData.foodPreferences.dietaryRestrictions || 'Ninguna'}
-        - Experiencias culinarias: ${userData.foodPreferences.culinaryExperiences.join(', ')}
+        - Experiencias culinarias: ${culinaryExperiences.join(', ')}
 
         **Compañía de Viaje:**
         - Tipo de viaje: ${userData.travelCompanion.type}
-        - Edades de los viajeros: ${userData.travelCompanion.ages.join(', ')}
+        - Edades de los viajeros: ${ages.join(', ')}
         - Requisitos especiales: ${userData.travelCompanion.specialRequirements || 'Ninguno'}
 
         **Nivel de Actividad:**
