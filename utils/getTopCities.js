@@ -17,7 +17,7 @@ async function getTopCities(country, numberOfCities = 3) {
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
-                model: "gpt-4",
+                model: "gpt-4o-mini",
                 messages: [
                     { role: "system", content: "Eres un experto en geografía y turismo." },
                     { role: "user", content: prompt }

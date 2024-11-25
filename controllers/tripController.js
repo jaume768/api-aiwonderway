@@ -4,6 +4,48 @@ const generateTripPDF = require('../utils/generatePDF');
 
 exports.getCivitatisActivities = require('../utils/fetchCivitatisActivities');
 
+exports.getTripById = async (req, res) => {
+    try {
+        const { tripId } = req.params;
+        const userId = req.userId;
+
+        const trip = await Trip.findById(tripId)
+            .populate('createdBy', 'username')
+            .populate('collaborators', 'username')
+            .populate({
+                path: 'reviews',
+                populate: { path: 'user', select: 'username' },
+            })
+            .populate({
+                path: 'comments',
+                populate: { path: 'user', select: 'username' },
+            });
+
+        if (!trip) {
+            return res.status(404).json({ msg: 'Itinerario no encontrado' });
+        }
+
+        if (!trip.public) {
+            if (!userId) {
+                return res.status(401).json({ msg: 'Acceso no autorizado' });
+            }
+            const isCreator = trip.createdBy._id.toString() === userId;
+            const isCollaborator = trip.collaborators.some(
+                (collaborator) => collaborator._id.toString() === userId
+            );
+
+            if (!isCreator && !isCollaborator) {
+                return res.status(403).json({ msg: 'No tienes permiso para ver este itinerario' });
+            }
+        }
+
+        res.json(trip);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
 exports.getPopularTrips = async (req, res) => {
     try {
         const trips = await Trip.find({ public: true }).sort({ createdAt: -1 }).limit(10);
