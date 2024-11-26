@@ -44,7 +44,7 @@ async function generateItinerary(userData) {
                         "ubicación": "Lugar de la actividad"
                     }
                 ],
-                "alojamiento": "Nombre del hotel recomendado",
+                "alojamiento": "Nombre del hotel recomendado" (si no cambian de ciudad, no cambies el alojamiento),
                 "transporte": "Detalles sobre transporte si aplica"
             },
             "dia2": { ... },
