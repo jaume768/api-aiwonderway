@@ -113,7 +113,7 @@ async function generateItinerary(userData) {
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
-                model: "gpt-4o",
+                model: "gpt-4o-mini",
                 messages: [
                     { role: "system", content: "Eres un asistente útil para planificar viajes." },
                     { role: "user", content: prompt }
