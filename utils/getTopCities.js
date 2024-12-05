@@ -39,19 +39,29 @@ async function getTopCities(country, numberOfCities = 3) {
         if (jsonMatch) {
             citiesText = jsonMatch[0];
         } else {
-            throw new Error('No se pudo extraer el JSON de ciudades de la respuesta de OpenAI.');
+            return [];
         }
 
-        const cities = JSON.parse(citiesText);
+        let cities;
+        try {
+            cities = JSON.parse(citiesText);
+        } catch (parseError) {
+            return [];
+        }
 
-        if (!Array.isArray(cities) || cities.length < numberOfCities) {
-            throw new Error('La respuesta de OpenAI no contiene una lista válida de ciudades.');
+        if (!Array.isArray(cities) || cities.length === 0) {
+            return [];
+        }
+
+        cities = cities.filter(city => city.spanish && city.english);
+
+        if (cities.length === 0) {
+            return [];
         }
 
         return cities.slice(0, numberOfCities);
     } catch (error) {
-        console.error('Error al obtener las ciudades desde OpenAI:', error.response ? error.response.data : error.message);
-        throw new Error('No se pudo obtener las ciudades principales del país.');
+        return [];
     }
 }
 
