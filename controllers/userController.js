@@ -41,6 +41,23 @@ exports.addFriend = async (req, res) => {
     }
 };
 
+exports.getPublicProfile = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const user = await User.findById(userId)
+            .select('username email bio profilePicture') 
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        res.json({ profile: user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+
 exports.acceptFriendRequest = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();

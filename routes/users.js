@@ -4,7 +4,8 @@ const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 router.get('/profile', authMiddleware, userController.getProfile);
-router.put('/profile', authMiddleware, userController.updateProfile);
+router.put('/profile', authMiddleware, userController.updateProfile);1
+router.get('/:userId/public-profile', userController.getPublicProfile);
 
 // Amigos
 router.post('/add-friend', authMiddleware, userController.addFriend);
