@@ -7,6 +7,8 @@ const tripSchema = new Schema(
         createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         collaborators: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         title: { type: String, required: true },
+        imageUrl: { type: String }, // Campo para la imagen
+        link: { type: String }, // Campo para el link externo
         description: { type: String, required: true },
         itinerary: { type: Schema.Types.Mixed, required: true }, // Guardar como objeto JSON
         public: { type: Boolean, default: true },

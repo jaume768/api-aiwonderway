@@ -22,6 +22,6 @@ router.post('/remove-collaborator', authMiddleware, tripController.removeCollabo
 
 
 router.get('/download/:tripId', authMiddleware, tripController.downloadTrip);
-router.get('/:tripId', authMiddleware, tripController.getTripById);
+router.get('/:tripId', tripController.getTripById);
 
 module.exports = router;
