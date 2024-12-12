@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Trip = require('../models/Trip');
+const mongoose = require('mongoose');
 
 exports.addFriend = async (req, res) => {
     try {
@@ -44,13 +45,62 @@ exports.addFriend = async (req, res) => {
 exports.getPublicProfile = async (req, res) => {
     try {
         const { userId } = req.params;
+        const requesterId = req.userId;
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ msg: 'ID de usuario inválido' });
+        }
+
         const user = await User.findById(userId)
-            .select('username email bio profilePicture') 
+            .select('username email bio profilePicture friends friendRequests')
+            .lean();
+
         if (!user) {
             return res.status(404).json({ msg: 'Usuario no encontrado' });
         }
 
-        res.json({ profile: user });
+        const isFriend = user.friends.includes(requesterId);
+
+        const hasSentRequest = user.friendRequests.includes(requesterId);
+
+        res.json({ 
+            profile: user,
+            isFriend,
+            hasSentRequest
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+
+exports.cancelFriendRequest = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { friendId } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(friendId)) {
+            return res.status(400).json({ msg: 'ID de usuario inválido' });
+        }
+
+        if (userId === friendId) {
+            return res.status(400).json({ msg: 'No puedes cancelar una solicitud de amistad a ti mismo' });
+        }
+
+        const friend = await User.findById(friendId);
+        if (!friend) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        if (!friend.friendRequests.includes(userId)) {
+            return res.status(400).json({ msg: 'No tienes una solicitud de amistad enviada a este usuario' });
+        }
+
+        friend.friendRequests = friend.friendRequests.filter(id => id.toString() !== userId);
+        await friend.save();
+
+        res.json({ msg: 'Solicitud de amistad cancelada exitosamente' });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error del servidor');

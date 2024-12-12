@@ -12,6 +12,7 @@ router.post('/add-friend', authMiddleware, userController.addFriend);
 router.post('/accept-friend', authMiddleware, userController.acceptFriendRequest);
 router.get('/:friendId/trips', authMiddleware, userController.getFriendTrips);
 router.get('/friend-requests', authMiddleware, userController.getFriendRequests);
+router.post('/cancel-friend-request', authMiddleware, userController.cancelFriendRequest);
 
 // Favoritos
 router.post('/favorites/add', authMiddleware, userController.addFavoriteTrip);
