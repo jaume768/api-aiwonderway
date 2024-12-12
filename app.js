@@ -1,7 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const passport = require('./utils/passport');
 const cors = require('cors');
+const session = require('express-session');
 
 // Cargar variables de entorno
 dotenv.config();
@@ -11,6 +13,15 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'un_secret_seguro',
+  resave: false,
+  saveUninitialized: false,
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
