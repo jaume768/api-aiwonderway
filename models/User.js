@@ -27,6 +27,8 @@ const userSchema = new Schema(
         password: { type: String, required: true },
         friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+        isVerified: { type: Boolean, default: false },
+        verificationToken: { type: String },
         profilePicture: { type: String },
         bio: { type: String },
         paymentHistory: [paymentHistorySchema],
