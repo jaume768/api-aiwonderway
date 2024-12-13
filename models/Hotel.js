@@ -17,6 +17,8 @@ const hotelSchema = new mongoose.Schema(
         checkInDate: { type: String },
         checkOutDate: { type: String },
         roomType: { type: String },
+        website: { type: String }, // Nuevo campo para la URL del sitio web
+        imageUrl: { type: String }, // Nuevo campo opcional para la imagen del hotel
     },
     { timestamps: true }
 );

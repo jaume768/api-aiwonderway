@@ -96,4 +96,95 @@ function shuffleArray(array) {
     return arr;
 }
 
-module.exports = fetchAmadeusHotels;
+async function obtenerSitiosWebHoteles(nombresHoteles) {
+    const apiKey = process.env.OPENAI_API_KEY;
+
+    const prompt = `
+    Tengo una lista de nombres de hoteles y necesito obtener las páginas web oficiales de cada uno. Por favor, proporciona una lista en formato JSON donde cada entrada tenga el nombre del hotel y su correspondiente sitio web.
+
+    Lista de hoteles:
+    ${nombresHoteles.map((name, index) => `${index + 1}. ${name}`).join('\n')}
+
+    Formato de respuesta:
+    [
+        {
+            "nombre": "Nombre del Hotel",
+            "sitio_web": "URL del sitio web"
+        },
+        ...
+    ]
+    `;
+
+    try {
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: "Eres un asistente útil que puede proporcionar sitios web oficiales de hoteles basándote en sus nombres." },
+                    { role: "user", content: prompt }
+                ],
+                max_tokens: 6000,
+                temperature: 0.2,
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+            }
+        );
+
+        const respuesta = response.data.choices[0].message.content.trim();
+
+        let sitiosWeb;
+        try {
+            sitiosWeb = JSON.parse(respuesta);
+        } catch (error) {
+            const regex = /\{\s*"nombre":\s*"(.+?)",\s*"sitio_web":\s*"(.+?)"\s*\}/g;
+            sitiosWeb = [];
+            let match;
+            while ((match = regex.exec(respuesta)) !== null) {
+                sitiosWeb.push({
+                    nombre: match[1],
+                    sitio_web: match[2],
+                });
+            }
+        }
+
+        return sitiosWeb;
+    } catch (error) {
+        console.error('Error al obtener sitios web de hoteles:', error.response ? error.response.data : error.message);
+        throw new Error('No se pudo obtener los sitios web de los hoteles.');
+    }
+}
+
+async function actualizarHotelesConSitiosWeb(cityCode, numHotels = 4) {
+    const hoteles = await fetchAmadeusHotels(cityCode, numHotels);
+    const nombresHoteles = hoteles.map(hotel => hotel.name);
+
+    const sitiosWeb = await obtenerSitiosWebHoteles(nombresHoteles);
+
+    const hotelesActualizados = hoteles.map(hotel => {
+        const sitio = sitiosWeb.find(sw => sw.nombre.toLowerCase() === hotel.name.toLowerCase());
+        return {
+            ...hotel,
+            website: sitio ? sitio.sitio_web : 'No disponible',
+            imageUrl: hotel.imageUrl || 'https://via.placeholder.com/150',
+        };
+    });
+
+    for (const hotelActualizado of hotelesActualizados) {
+        await Hotel.updateOne(
+            { hotelId: hotelActualizado.hotelId },
+            { 
+                website: hotelActualizado.website,
+                imageUrl: hotelActualizado.imageUrl,
+            }
+        );
+    }
+
+    return hotelesActualizados;
+}
+
+module.exports = actualizarHotelesConSitiosWeb;

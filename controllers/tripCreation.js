@@ -1,7 +1,7 @@
 const Trip = require('../models/Trip');
 const User = require('../models/User');
 const fetchCivitatisActivities = require('../utils/fetchCivitatisActivities');
-const fetchAmadeusHotels = require('../utils/fetchAmadeusHotels');
+const actualizarHotelesConSitiosWeb = require('../utils/fetchAmadeusHotels');
 const getTopCities = require('../utils/getTopCities');
 const generateItinerary = require('../utils/generateItinerary');
 const moment = require('moment');
@@ -80,7 +80,7 @@ exports.createTrip = async (req, res) => {
             }
         
             try {
-                const hotels = await fetchAmadeusHotels(cityCode, 4);
+                const hotels = await actualizarHotelesConSitiosWeb(cityCode, 3);
                 hotelsPerCity[citySpanish] = hotels;
             } catch (hotelError) {
                 console.error(`Error al obtener hoteles para la ciudad con código IATA "${cityCode}":`, hotelError.message);
