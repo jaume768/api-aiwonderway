@@ -122,6 +122,8 @@ exports.createTrip = async (req, res) => {
             travelCompanion,
             activityLevel,
             additionalPreferences,
+            activitiesPerCity,
+            hotelsPerCity
         });
 
         await trip.save();

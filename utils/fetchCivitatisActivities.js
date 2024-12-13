@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-async function fetchCivitatisActivities(city,numActivities) {
+async function fetchCivitatisActivities(city, numActivities) {
     if (!city) {
         throw new Error('La ciudad es requerida como parámetro.');
     }
@@ -15,25 +15,49 @@ async function fetchCivitatisActivities(city,numActivities) {
 
         const activities = [];
 
-        $('article.comfort-card').each((index, element) => {
-            const title = $(element).find('h2.comfort-card__title').text().trim();
-            const linkRelative = $(element).find('a._activity-link').attr('href');
-            const link = linkRelative ? `https://www.civitatis.com${linkRelative}` : 'Enlace no disponible';
-            const ratingRaw = $(element).find('span.m-rating--text').text().trim();
-            const reviewsRaw = $(element).find('span.text--rating-total').text().trim();
-            const priceElement = $(element).find('span.comfort-card__price__text');
-            const price = priceElement.length > 0 ? priceElement.text().trim() : 'Gratis';
+        $('article.compact-card, article.comfort-card').each((index, element) => {
+            const title = $(element).find('.compact-card__title, .comfort-card__title').text().trim() || 'Título no disponible';
 
-            const rating = ratingRaw
-                ? ratingRaw.replace(/\s+/g, ' ').replace('/ 10', '').trim()
-                : 'Sin calificación';
-            const reviews = reviewsRaw
-                ? reviewsRaw.replace(/\s+/g, ' ').replace('opiniones', '').trim()
-                : '0';
+            const linkRelative = $(element).find('a.compact-card__link, a._activity-link, a.ga-trackEvent-element').attr('href');
+            const link = linkRelative ? `https://www.civitatis.com${linkRelative}` : 'Enlace no disponible';
+
+            let imageUrl = 'Imagen no disponible';
+            const imgElement = $(element).find('.compact-card__img img, .comfort-card__img img');
+            if (imgElement.length > 0) {
+                const dataSrc = imgElement.attr('data-src');
+                const dataSrcMobile = imgElement.attr('data-src-mobile');
+                if (dataSrc) {
+                    imageUrl = dataSrc.startsWith('http') ? dataSrc : `https://www.civitatis.com${dataSrc}`;
+                } else if (dataSrcMobile) {
+                    imageUrl = dataSrcMobile.startsWith('http') ? dataSrcMobile : `https://www.civitatis.com${dataSrcMobile}`;
+                } else {
+                    const src = imgElement.attr('src');
+                    imageUrl = src ? (src.startsWith('http') ? src : `https://www.civitatis.com${src}`) : 'Imagen no disponible';
+                }
+            }
+
+            let rating = 'Sin calificación';
+            const ratingRaw = $(element).find('.m-rating--text').first().text().trim();
+            if (ratingRaw && !ratingRaw.toLowerCase().includes('sin valorar')) {
+                rating = ratingRaw.replace(/\s+/g, ' ').replace('/ 10', '').trim();
+            }
+
+            let reviews = '0';
+            const reviewsRaw = $(element).find('.text--rating-total').first().text().trim();
+            if (reviewsRaw && !reviewsRaw.toLowerCase().includes('sin valorar')) {
+                reviews = reviewsRaw.replace(/\s+/g, ' ').replace('opiniones', '').replace('.', '').trim();
+            }
+
+            let price = 'Gratis';
+            const priceElement = $(element).find('.compact-card__price__text, .comfort-card__price__text');
+            if (priceElement.length > 0) {
+                price = priceElement.text().trim();
+            }
 
             activities.push({
-                title: title || 'Título no disponible',
+                title: title,
                 link: link,
+                imageUrl: imageUrl,
                 rating: rating,
                 reviews: reviews,
                 price: price

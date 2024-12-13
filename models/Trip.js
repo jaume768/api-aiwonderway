@@ -14,6 +14,8 @@ const tripSchema = new Schema(
         public: { type: Boolean, default: true },
         reviews: [{ type: Schema.Types.ObjectId, ref: 'Review' }],
         comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
+        activitiesPerCity: { type: Schema.Types.Mixed }, // Asegurado
+        hotelsPerCity: { type: Schema.Types.Mixed },      // Asegurado
         travelDates: {
             startDate: { type: Date, required: true },
             endDate: { type: Date, required: true },
