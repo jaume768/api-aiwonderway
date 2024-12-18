@@ -27,7 +27,7 @@ exports.register = async (req, res) => {
         await user.save();
 
         const verificationLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}&email=${email}`;
-        await sendVerificationEmail(email, verificationLink);
+        await sendVerificationEmail(email, username, verificationLink);
 
         res.json({ msg: 'Registro exitoso. Por favor, verifica tu correo electrónico.' });
     } catch (err) {
