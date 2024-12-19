@@ -1,8 +1,53 @@
 const Trip = require('../models/Trip');
 const User = require('../models/User');
 const generateTripPDF = require('../utils/generatePDF');
-
+const { cloudinary, storage } = require('../utils/cloudinary');
 exports.getCivitatisActivities = require('../utils/fetchCivitatisActivities');
+
+exports.uploadTripImage = async (req, res) => {
+    try {
+        const { tripId } = req.params;
+        const userId = req.userId;
+
+        const trip = await Trip.findById(tripId);
+        if (!trip) {
+            return res.status(404).json({ msg: 'Itinerario no encontrado' });
+        }
+
+        const isCreator = trip.createdBy.toString() === userId;
+        const isCollaborator = trip.collaborators.some(
+            (collab) => collab.toString() === userId
+        );
+
+        if (!isCreator && !isCollaborator) {
+            return res.status(403).json({ msg: 'No tienes permiso para editar este itinerario' });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ msg: 'No se ha proporcionado ninguna imagen' });
+        }
+
+        const result = await cloudinary.uploader.upload_stream(
+            { folder: 'itinerarios' },
+            async (error, result) => {
+                if (error) {
+                    console.error(error);
+                    return res.status(500).json({ msg: 'Error al subir la imagen' });
+                }
+
+                trip.imageUrl = result.secure_url;
+                await trip.save();
+
+                res.json({ msg: 'Imagen subida exitosamente', imageUrl: result.secure_url });
+            }
+        );
+
+        result.end(req.file.buffer);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
 
 exports.getTripById = async (req, res) => {
     try {

@@ -1,6 +1,38 @@
 const User = require('../models/User');
 const Trip = require('../models/Trip');
 const mongoose = require('mongoose');
+const { cloudinary } = require('../utils/cloudinary');
+
+exports.uploadProfilePicture = async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        if (!req.file || !req.file.path) {
+            return res.status(400).json({ msg: 'No se ha subido ninguna imagen.' });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado.' });
+        }
+
+        if (user.profilePicture && user.profilePicture.public_id) {
+            await cloudinary.uploader.destroy(user.profilePicture.public_id);
+        }
+
+        user.profilePicture = {
+            url: req.file.path,
+            public_id: req.file.filename,
+        };
+
+        await user.save();
+
+        res.json({ msg: 'Foto de perfil actualizada exitosamente.', profilePicture: user.profilePicture });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: 'Error del servidor.' });
+    }
+};
 
 exports.addFriend = async (req, res) => {
     try {

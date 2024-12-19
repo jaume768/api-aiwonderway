@@ -1,3 +1,4 @@
+// models/User.js
 const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
@@ -29,7 +30,10 @@ const userSchema = new Schema(
         friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         isVerified: { type: Boolean, default: false },
         verificationToken: { type: String },
-        profilePicture: { type: String },
+        profilePicture: {
+            url: { type: String },
+            public_id: { type: String },
+        },
         bio: { type: String },
         paymentHistory: [paymentHistorySchema],
         favorites: [{ type: Schema.Types.ObjectId, ref: 'Trip' }],

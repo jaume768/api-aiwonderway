@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
+const upload = require('../middleware/upload');
 const tripController = require('../controllers/tripController');
 const tripCreation = require('../controllers/tripCreation');
 
@@ -23,5 +23,12 @@ router.post('/remove-collaborator', authMiddleware, tripController.removeCollabo
 
 router.get('/download/:tripId', authMiddleware, tripController.downloadTrip);
 router.get('/:tripId', tripController.getTripById);
+
+router.post(
+    '/:tripId/upload-image',
+    authMiddleware,
+    upload.single('image'),
+    tripController.uploadTripImage
+);
 
 module.exports = router;

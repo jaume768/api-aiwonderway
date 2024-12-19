@@ -2,10 +2,14 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
+const upload = require('../middleware/uploadProfilePicture');
 
 router.get('/profile', authMiddleware, userController.getProfile);
 router.put('/profile', authMiddleware, userController.updateProfile);1
 router.get('/:userId/public-profile', userController.getPublicProfile);
+
+// Perfil
+router.post('/upload-profile-picture', authMiddleware, upload.single('image'), userController.uploadProfilePicture);
 
 // Amigos
 router.post('/add-friend', authMiddleware, userController.addFriend);
