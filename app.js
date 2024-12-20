@@ -31,6 +31,7 @@ const reviewRoutes = require('./routes/reviews');
 const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/paymentRoutes');
 const commentRoutes = require('./routes/comments');
+const searchRoutes = require('./routes/search');
 const { checkUserSubscriptions } = require('./utils/scheduler');
 
 // Rutas
@@ -40,6 +41,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', reviewRoutes);
 app.use('/api', commentRoutes);
+app.use('/api/search', searchRoutes);
 app.use('/api/payments', paymentRoutes);
 
 checkUserSubscriptions();
