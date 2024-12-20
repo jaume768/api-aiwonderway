@@ -5,17 +5,19 @@ const mongoose = require('mongoose');
 exports.search = async (req, res) => {
     try {
         const q = req.query.q || '';
-        if (!q.trim()) {
+        const trimmedQuery = q.trim();
+
+        if (trimmedQuery.length < 3) {
             return res.json([]);
         }
 
         const tripsByTitle = await Trip.find({
-            title: { $regex: q, $options: 'i' },
+            title: { $regex: trimmedQuery, $options: 'i' },
             public: true
         }).populate('createdBy', 'username');
 
         const users = await User.find({
-            username: { $regex: q, $options: 'i' }
+            username: { $regex: trimmedQuery, $options: 'i' }
         }).select('_id');
 
         const userIds = users.map(u => u._id);
