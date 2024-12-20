@@ -1,6 +1,7 @@
 const Trip = require('../models/Trip');
 const User = require('../models/User');
 const generateTripPDF = require('../utils/generatePDF');
+const jwt = require('jsonwebtoken');
 const { cloudinary, storage } = require('../utils/cloudinary');
 exports.getCivitatisActivities = require('../utils/fetchCivitatisActivities');
 
@@ -60,6 +61,7 @@ exports.getTripById = async (req, res) => {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
                 userId = decoded.userId;
             } catch (err) {
+                console.log(err);
                 userId = null;
             }
         }
