@@ -139,52 +139,59 @@ exports.cancelFriendRequest = async (req, res) => {
     }
 };
 
+exports.getFriends = async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const user = await User.findById(userId)
+            .populate('friends', 'username email profilePicture')
+            .select('friends');
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        res.json({ friends: user.friends });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
 
 exports.acceptFriendRequest = async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
     try {
         const userId = req.userId;
         const { requestId } = req.body;
 
         if (userId === requestId) {
-            await session.abortTransaction();
-            session.endSession();
             return res.status(400).json({ msg: 'No puedes aceptar una solicitud de amistad de ti mismo' });
         }
 
         const [user, requester] = await Promise.all([
-            User.findById(userId).session(session),
-            User.findById(requestId).session(session)
+            User.findById(userId),
+            User.findById(requestId)
         ]);
 
         if (!user || !requester) {
-            await session.abortTransaction();
-            session.endSession();
             return res.status(404).json({ msg: 'Usuario no encontrado' });
         }
 
-        if (!user.friendRequests.some(id => id.toString() === requestId)) {
-            await session.abortTransaction();
-            session.endSession();
+        if (!user.friendRequests.includes(requestId)) {
             return res.status(400).json({ msg: 'No hay solicitud de amistad de este usuario' });
         }
 
-        user.friendRequests = user.friendRequests.filter(id => id.toString() !== requestId);
-
+        user.friendRequests.pull(requestId);
         user.friends.addToSet(requestId);
         requester.friends.addToSet(userId);
 
-        await user.save({ session });
-        await requester.save({ session });
-
-        await session.commitTransaction();
-        session.endSession();
+        await Promise.all([
+            user.save(),
+            requester.save()
+        ]);
 
         res.json({ msg: 'Solicitud de amistad aceptada' });
     } catch (err) {
-        await session.abortTransaction();
-        session.endSession();
         console.error(err);
         res.status(500).send('Error del servidor');
     }
@@ -308,7 +315,7 @@ exports.getFriendTrips = async (req, res) => {
                 { public: true },
                 { createdBy: userId }
             ]
-        });
+        }).populate('createdBy', 'username profilePicture');
 
         res.json(trips);
     } catch (err) {
