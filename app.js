@@ -5,6 +5,8 @@ const passport = require('./utils/passport');
 const cors = require('cors');
 const session = require('express-session');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const csurf = require('csurf');
 
 dotenv.config();
 
@@ -19,15 +21,30 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-
+app.use(helmet());
 app.use(express.json());
 app.use(cors());
+app.use(csurf());
+
+app.use((err, req, res, next) => {
+  if (err.code !== 'EBADCSRFTOKEN') return next(err);
+
+  res.status(403).json({ message: 'Formulario inválido' });
+});
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'un_secret_seguro',
   resave: false,
   saveUninitialized: false,
 }));
+
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS.split(','),
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 app.use(passport.initialize());
 app.use(passport.session());
