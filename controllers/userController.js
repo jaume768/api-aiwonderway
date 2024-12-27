@@ -597,11 +597,10 @@ exports.updateProfile = async (req, res) => {
         }
         if (bio) updateFields.bio = bio.trim();
 
-        if (username || email) {
+        if (username) {
             const existingUser = await User.findOne({
                 $or: [
-                    { username: username ? username.trim() : undefined },
-                    { email: email ? email.trim() : undefined }
+                    { username: username ? username.trim() : undefined }
                 ],
                 _id: { $ne: userId }
             });
@@ -609,9 +608,6 @@ exports.updateProfile = async (req, res) => {
             if (existingUser) {
                 if (existingUser.username === username) {
                     return res.status(400).json({ msg: 'El nombre de usuario ya está en uso' });
-                }
-                if (existingUser.email === email) {
-                    return res.status(400).json({ msg: 'El email ya está en uso' });
                 }
             }
         }
