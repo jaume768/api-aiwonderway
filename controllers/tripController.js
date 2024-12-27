@@ -108,28 +108,28 @@ exports.getPopularTrips = async (req, res) => {
     try {
       const fixedTripIds = [
         '676e9a7360ce0657009af9fd',
-        '676e9b9760ce0657009afb81',
-        '67597890b8de5bcb3cbda7b8',
-        '672b5f9f738b465e87669352',
-        '672b5fd2738b465e87669356',
-        '672b60ee738b465e8766935a',
-        '675976a0e5c0f98ac7bb49b2',
-        '674454eed122ff7227898f9a',
-        '67597720e5c0f98ac7bb4b11',
-        '67597801e5c0f98ac7bb4c60'
+        '676ea1aabcdadc60ab52bae4',
+        '676ea354bcdadc60ab52bb3a',
+        '676ea41cbcdadc60ab52bb56',
+        '676ea4c1bcdadc60ab52bb68',
+        '676ea5b9bcdadc60ab52bc04',
+        '676ea689bcdadc60ab52beea',
+        '676ea790bcdadc60ab52c067',
+        '676ea87cbcdadc60ab52c2d3',
+        '676ea920bcdadc60ab52c6b3'
       ];
   
       const tripLinks = {
         '676e9a7360ce0657009af9fd': 'https://media.istockphoto.com/id/539115110/es/foto/colosseum-in-rome-italy-y-sol-de-la-ma%C3%B1ana.jpg?s=612x612&w=0&k=20&c=S2BE7bvASd4hm6Yp0VbtvaGnnqTR4p5HJ-6RfDjR-MQ=',
-        '676e9b9760ce0657009afb81': 'https://media.istockphoto.com/id/1132919653/es/foto/estocolmo-suecia-vista-panor%C3%A1mica-del-atardecer-de-verano-con-el-colorido-cielo-de-la.jpg?s=612x612&w=0&k=20&c=UQy3YSXxIc_Z2VTLwuRkxdjK_JXU3bALcm-wxx6HU24=',
-        '67597890b8de5bcb3cbda7b8': 'https://entremontanas.com/wp-content/uploads/Vietnam-1.jpg',
-        '672b5f9f738b465e87669352': 'https://media.istockphoto.com/id/539115110/es/foto/colosseum-in-rome-italy-y-sol-de-la-ma%C3%B1ana.jpg?s=612x612&w=0&k=20&c=S2BE7bvASd4hm6Yp0VbtvaGnnqTR4p5HJ-6RfDjR-MQ=',
-        '672b5fd2738b465e87669356': 'https://viajes.nationalgeographic.com.es/medio/2017/02/09/shutterstock-302415089_6b607cdb.jpg',
-        '672b60ee738b465e8766935a': 'https://www.civitatis.com/f/pseo/espana/madrid/gran-via-noche-madrid-1200.jpg',
-        '675976a0e5c0f98ac7bb49b2': 'https://www.keralaviajes.com/blog/wp-content/uploads/2020/03/koh-tao-tailandia.jpg',
-        '674454eed122ff7227898f9a': 'https://a.travel-assets.com/findyours-php/viewfinder/images/res70/52000/52309-Seville.jpg',
-        '67597720e5c0f98ac7bb4b11': 'https://fotografias.larazon.es/clipping/cmsimages01/2022/12/22/DECA45C8-F887-447C-820A-889D821FC7AD/98.jpg?crop=4800,2701,x0,y250&width=1900&height=1069&optimize=low&format=webply',
-        '67597801e5c0f98ac7bb4c60': 'https://cms.w2m.com/.imaging/fullHd/Sites/Flowo/imagenes-blog/blog/cancun-o-riviera-maya-cual-es-mejor.jpg'
+        '676ea1aabcdadc60ab52bae4': 'https://media.istockphoto.com/id/1132919653/es/foto/estocolmo-suecia-vista-panor%C3%A1mica-del-atardecer-de-verano-con-el-colorido-cielo-de-la.jpg?s=612x612&w=0&k=20&c=UQy3YSXxIc_Z2VTLwuRkxdjK_JXU3bALcm-wxx6HU24=',
+        '676ea354bcdadc60ab52bb3a': 'https://res.cloudinary.com/hello-tickets/image/upload/c_limit,f_auto,q_auto,w_1300/v1684589947/jqt6vclfpnn2ypd6drhd.jpg',
+        '676ea41cbcdadc60ab52bb56': 'https://i0.wp.com/ventureandpleasure.com/wp-content/uploads/2023/05/ciudades-de-tailandia-scaled.jpg?fit=2560%2C1707&ssl=1',
+        '676ea4c1bcdadc60ab52bb68': 'https://huttohuthikingswitzerland.b-cdn.net/wp-content/uploads/Spectacular-principal-street-of-Lauterbrunnen-with-shops-hotels-terraces-swiss-flags-and-stunning-Staubbach-waterfall-in-background.webp',
+        '676ea5b9bcdadc60ab52bc04': 'https://cdn5.travelconline.com/images/fit-in/2000x0/filters:quality(75):strip_metadata():format(webp)/https%3A%2F%2Ftr2storage.blob.core.windows.net%2Fimagenes%2FnIoLCK5zpYF6-chC14sr9qfjpeg.jpeg',
+        '676ea689bcdadc60ab52beea': 'https://content.r9cdn.net/rimg/dimg/17/74/0ca6e469-city-30651-1632b88f203.jpg?width=1366&height=768&xhint=2635&yhint=1507&crop=true',
+        '676ea790bcdadc60ab52c067': 'https://viajes.nationalgeographic.com.es/medio/2024/10/31/ciudad-del-cabo_b430dc73_682284814_241031131744_1280x824.webp',
+        '676ea87cbcdadc60ab52c2d3': 'https://www.barcelo.com/guia-turismo/wp-content/uploads/que-visitar-en-praga.jpg',
+        '676ea920bcdadc60ab52c6b3': 'https://images.gostudy.com.au/w:1400/h:800/q:mauto/f:best/ig:avif/id:1619b76004c98e623b2e00397e8e6d0a/https://gostudyaus.es/SYD_header.jpg'
       };
   
       let trips = await Trip.find({ _id: { $in: fixedTripIds } });
