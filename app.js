@@ -4,13 +4,22 @@ const dotenv = require('dotenv');
 const passport = require('./utils/passport');
 const cors = require('cors');
 const session = require('express-session');
+const rateLimit = require('express-rate-limit');
 
-// Cargar variables de entorno
 dotenv.config();
 
 const app = express();
 
-// Middleware
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 50,
+  message: 'Demasiadas solicitudes desde esta IP, por favor intenta nuevamente después de un minuto',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
+
 app.use(express.json());
 app.use(cors());
 
