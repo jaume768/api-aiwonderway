@@ -588,23 +588,14 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const userId = req.userId;
-        const { username, email, bio, profilePicture, travelPreferences } = req.body;
+        const { username, bio } = req.body;
 
         const updateFields = {};
 
         if (username) {
             updateFields.username = username.trim();
         }
-        if (email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                return res.status(400).json({ msg: 'Formato de email inválido' });
-            }
-            updateFields.email = email.trim();
-        }
         if (bio) updateFields.bio = bio.trim();
-        if (profilePicture) updateFields.profilePicture = profilePicture.trim();
-        if (travelPreferences) updateFields.travelPreferences = travelPreferences;
 
         if (username || email) {
             const existingUser = await User.findOne({
