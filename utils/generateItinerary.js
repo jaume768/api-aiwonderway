@@ -60,7 +60,7 @@ async function generateItinerary(userData) {
         - Inicio: ${userData.travelDates.startDate}
         - Fin: ${userData.travelDates.endDate}
 
-        **Preferencias de Destino:**
+        **Preferencias de Destino:** (FIJATE BIEN QUE EL DESTINO SEA EN EL PAIS QUE PIDE EL USUARIO IGUALMENTE)
         - Tipo de destino: ${userData.destinationPreferences.type}
         - Región preferida: ${userData.destinationPreferences.region}
         - Clima deseado: ${userData.destinationPreferences.climate}
@@ -113,7 +113,7 @@ async function generateItinerary(userData) {
         const response = await axios.post(
             'https://api.openai.com/v1/chat/completions',
             {
-                model: "gpt-4o-mini",
+                model: "gpt-4o",
                 messages: [
                     { role: "system", content: "Eres un asistente útil para planificar viajes." },
                     { role: "user", content: prompt }

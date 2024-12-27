@@ -107,8 +107,8 @@ exports.getTripById = async (req, res) => {
 exports.getPopularTrips = async (req, res) => {
     try {
       const fixedTripIds = [
-        '6759755fe5c0f98ac7bb473e',
-        '675c17aaaa49db3405fd0ca6',
+        '676e9a7360ce0657009af9fd',
+        '676e9b9760ce0657009afb81',
         '67597890b8de5bcb3cbda7b8',
         '672b5f9f738b465e87669352',
         '672b5fd2738b465e87669356',
@@ -120,8 +120,8 @@ exports.getPopularTrips = async (req, res) => {
       ];
   
       const tripLinks = {
-        '6759755fe5c0f98ac7bb473e': 'https://img.rtve.es/imagenes/alpes-suizos-viajar-visitar/1639070122354.jpg',
-        '675c17aaaa49db3405fd0ca6': 'https://media.istockphoto.com/id/1390815938/es/foto/ciudad-de-tokio-en-japón.jpg?s=612x612&w=0&k=20&c=Vf3r1Qf3h-wRyrxOiZQBpZpzxjT3G3sLypwmbqgQxtU=',
+        '676e9a7360ce0657009af9fd': 'https://media.istockphoto.com/id/539115110/es/foto/colosseum-in-rome-italy-y-sol-de-la-ma%C3%B1ana.jpg?s=612x612&w=0&k=20&c=S2BE7bvASd4hm6Yp0VbtvaGnnqTR4p5HJ-6RfDjR-MQ=',
+        '676e9b9760ce0657009afb81': 'https://media.istockphoto.com/id/1132919653/es/foto/estocolmo-suecia-vista-panor%C3%A1mica-del-atardecer-de-verano-con-el-colorido-cielo-de-la.jpg?s=612x612&w=0&k=20&c=UQy3YSXxIc_Z2VTLwuRkxdjK_JXU3bALcm-wxx6HU24=',
         '67597890b8de5bcb3cbda7b8': 'https://entremontanas.com/wp-content/uploads/Vietnam-1.jpg',
         '672b5f9f738b465e87669352': 'https://media.istockphoto.com/id/539115110/es/foto/colosseum-in-rome-italy-y-sol-de-la-ma%C3%B1ana.jpg?s=612x612&w=0&k=20&c=S2BE7bvASd4hm6Yp0VbtvaGnnqTR4p5HJ-6RfDjR-MQ=',
         '672b5fd2738b465e87669356': 'https://viajes.nationalgeographic.com.es/medio/2017/02/09/shutterstock-302415089_6b607cdb.jpg',
