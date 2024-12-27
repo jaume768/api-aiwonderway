@@ -6,7 +6,6 @@ const cors = require('cors');
 const session = require('express-session');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
-const csurf = require('csurf');
 
 dotenv.config();
 
@@ -24,18 +23,8 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-app.use(helmet());
-
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ limit: '10kb', extended: true }));
-
-const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS.split(','),
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'un_secret_seguro',
@@ -51,17 +40,6 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-app.use(csurf());
-
-app.use((err, req, res, next) => {
-  if (err.code !== 'EBADCSRFTOKEN') return next(err);
-  res.status(403).json({ message: 'Formulario inválido' });
-});
-
-app.get('/api/csrf-token', (req, res) => {
-  res.json({ csrfToken: req.csrfToken() });
-});
 
 const authRoutes = require('./routes/auth');
 const tripRoutes = require('./routes/trips');
