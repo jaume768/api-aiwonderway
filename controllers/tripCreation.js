@@ -104,6 +104,8 @@ exports.createTrip = async (req, res) => {
             hotelsPerCity
         };
 
+        console.log(userData.destinationPreferences);
+
         const itinerary = await generateItinerary(userData);
 
         const trip = new Trip({
