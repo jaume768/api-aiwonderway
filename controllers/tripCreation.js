@@ -5,6 +5,10 @@ const actualizarHotelesConSitiosWeb = require('../utils/fetchAmadeusHotels');
 const getTopCities = require('../utils/getTopCities');
 const generateItinerary = require('../utils/generateItinerary');
 const moment = require('moment');
+const generateTripPDF = require('../utils/generatePDF');
+const jwt = require('jsonwebtoken');
+const { cloudinary, storage } = require('../utils/cloudinary');
+const fs = require('fs');
 
 exports.createTrip = async (req, res) => {
     try {
@@ -33,6 +37,8 @@ exports.createTrip = async (req, res) => {
             'travelDates.endDate',
             'destinationPreferences',
             'destinationPreferences.country',
+            'destinationPreferences.countryName',
+            'destinationPreferences.type',
             'budget',
             'budget.total',
             'accommodationPreferences',
@@ -51,7 +57,7 @@ exports.createTrip = async (req, res) => {
             for (const part of fieldParts) {
                 value = value ? value[part] : undefined;
             }
-            if (value === undefined || value === null) {
+            if (value === undefined || value === null || value === '') {
                 return res.status(400).json({ msg: `El campo "${field}" es requerido.` });
             }
         }
@@ -61,7 +67,7 @@ exports.createTrip = async (req, res) => {
             return res.status(400).json({ msg: 'El número de ciudades debe ser al menos una.' });
         }
 
-        const country = destinationPreferences.country;
+        const country = destinationPreferences.countryName;
         const topCities = await getTopCities(country, numCities);
 
         const activitiesPerCity = {};
@@ -103,8 +109,6 @@ exports.createTrip = async (req, res) => {
             activitiesPerCity,
             hotelsPerCity
         };
-
-        console.log(userData.destinationPreferences);
 
         const itinerary = await generateItinerary(userData);
 

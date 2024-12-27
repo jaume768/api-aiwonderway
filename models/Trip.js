@@ -21,10 +21,12 @@ const tripSchema = new Schema(
             endDate: { type: Date, required: true },
         },
         destinationPreferences: {
-            type: {
-                type: String, // Playa, montaña, ciudad, etc.
-                enum: ['Playa', 'Montaña', 'Ciudad', 'Campo', 'Otro','Aventura'],
-                required: true,
+            country: { type: String, required: true },       // Código del país
+            countryName: { type: String, required: true },   // Nombre del país
+            type: { 
+                type: String, 
+                enum: ['Playa', 'Montaña', 'Ciudad', 'Campo', 'Otro','Aventura'], 
+                required: true 
             },
             region: { type: String },
             climate: { type: String },

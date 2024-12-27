@@ -62,7 +62,7 @@ async function generateItinerary(userData) {
 
         **Preferencias de Destino:** (FIJATE BIEN QUE EL DESTINO SEA EN EL PAIS QUE PIDE EL USUARIO IGUALMENTE)
         - Tipo de destino: ${userData.destinationPreferences.type}
-        - Región preferida: ${userData.destinationPreferences.region}
+        - Región preferida: ${userData.destinationPreferences.countryName}
         - Clima deseado: ${userData.destinationPreferences.climate}
 
         **Presupuesto:**
