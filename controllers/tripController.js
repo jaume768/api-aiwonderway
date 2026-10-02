@@ -142,6 +142,10 @@ exports.getPopularTrips = async (req, res) => {
       };
   
       let trips = await Trip.find({ _id: { $in: fixedTripIds } });
+
+      if (trips.length === 0) {
+        trips = await Trip.find({ public: true }).sort({ createdAt: -1 }).limit(12);
+      }
   
       trips = trips.map(trip => {
         const link = tripLinks[trip._id.toString()];

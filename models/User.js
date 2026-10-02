@@ -29,6 +29,8 @@ const userSchema = new Schema(
         friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         friendRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
         isVerified: { type: Boolean, default: false },
+        // Cuenta de demostración compartida (sin contraseña, con límites).
+        isDemo: { type: Boolean, default: false },
         verificationToken: { type: String },
         profilePicture: {
             url: { type: String },

@@ -10,6 +10,9 @@ const jwt = require('jsonwebtoken');
 const { cloudinary, storage } = require('../utils/cloudinary');
 const fs = require('fs');
 
+// Máximo de viajes que puede tener a la vez la cuenta demo.
+const DEMO_MAX_TRIPS = Number(process.env.DEMO_MAX_TRIPS) || 10;
+
 exports.createTrip = async (req, res) => {
     try {
         const {
@@ -30,6 +33,16 @@ exports.createTrip = async (req, res) => {
         } = req.body;
 
         const userId = req.userId;
+
+        const creator = await User.findById(userId);
+        if (creator?.isDemo) {
+            const demoTrips = await Trip.countDocuments({ createdBy: userId });
+            if (demoTrips >= DEMO_MAX_TRIPS) {
+                return res.status(403).json({
+                    msg: `La cuenta demo admite un máximo de ${DEMO_MAX_TRIPS} viajes. Elimina alguno para crear otro.`,
+                });
+            }
+        }
 
         const requiredFields = [
             'travelDates',

@@ -8,8 +8,17 @@ const sendVerificationEmail = require('../utils/sendVerificationEmail');
 // envía correo (para entornos sin proveedor de email configurado).
 const AUTO_VERIFY_EMAIL = process.env.AUTO_VERIFY_EMAIL === 'true';
 
+// El registro público está cerrado salvo que se active con ALLOW_REGISTRATION=true.
+const ALLOW_REGISTRATION = process.env.ALLOW_REGISTRATION === 'true';
+
+const DEMO_USER = { username: 'demo', email: 'demo@traveldaring.com' };
+
 exports.register = async (req, res) => {
     try {
+        if (!ALLOW_REGISTRATION) {
+            return res.status(403).json({ msg: 'El registro está cerrado. Prueba la cuenta demo.' });
+        }
+
         const { username, email, password } = req.body;
 
         let user = await User.findOne({ email });
@@ -52,7 +61,8 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ msg: 'Credenciales inválidas' });
+        // La cuenta demo no tiene contraseña: solo se entra por /auth/demo.
+        if (!user || !user.password) return res.status(400).json({ msg: 'Credenciales inválidas' });
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ msg: 'Credenciales inválidas' });
@@ -86,6 +96,30 @@ exports.verifyEmail = async (req, res) => {
         await user.save();
 
         res.json({ msg: 'Cuenta verificada exitosamente. Ya puedes iniciar sesión.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error del servidor');
+    }
+};
+
+// POST /api/auth/demo — inicia sesión con la cuenta de demostración compartida
+// (se crea la primera vez). No requiere credenciales.
+exports.demoLogin = async (req, res) => {
+    try {
+        let user = await User.findOne({ email: DEMO_USER.email });
+        if (!user) {
+            user = await User.create({
+                ...DEMO_USER,
+                password: null,
+                isVerified: true,
+                isDemo: true,
+                role: 'premium',
+                bio: 'Cuenta de demostración de TravelDaring.',
+            });
+        }
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        res.json({ token });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error del servidor');

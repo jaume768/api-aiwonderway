@@ -5,6 +5,11 @@ const { cloudinary } = require('../utils/cloudinary');
 
 exports.uploadProfilePicture = async (req, res) => {
     try {
+        const current = await User.findById(req.userId);
+        if (current?.isDemo) {
+            return res.status(403).json({ msg: 'El perfil de la cuenta demo no se puede modificar.' });
+        }
+
         const userId = req.userId;
 
         if (!req.file || !req.file.path) {
@@ -588,6 +593,11 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const userId = req.userId;
+
+        const current = await User.findById(userId);
+        if (current?.isDemo) {
+            return res.status(403).json({ msg: 'El perfil de la cuenta demo no se puede modificar.' });
+        }
         const { username, bio } = req.body;
 
         const updateFields = {};
