@@ -1,0 +1,21 @@
+# --- traveldaring (React + Express + MongoDB, /srv/traveldaring, compose docker-compose.shared-caddy.yml) ---
+# Bloque del sitio para el Caddy que ya ocupa 80/443 en el servidor.
+# Se añade al final del Caddyfile de ese Caddy (con >>, no con sed -i: rompe
+# el bind mount) y se recarga. El DNS *.websjfs.com ya apunta al servidor.
+traveldaring.websjfs.com {
+	encode zstd gzip
+
+	handle /api/* {
+		reverse_proxy traveldaring-api:5000
+	}
+
+	handle {
+		reverse_proxy traveldaring-web:80
+	}
+
+	header {
+		-Server
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Content-Type-Options nosniff
+	}
+}

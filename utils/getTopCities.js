@@ -1,8 +1,6 @@
-const axios = require('axios');
+const { chatCompletion } = require('./openai');
 
 async function getTopCities(country, numberOfCities = 3) {
-    const apiKey = process.env.OPENAI_API_KEY;
-
     const prompt = `
         Proporciona una lista en formato JSON de las ${numberOfCities} ciudades más importantes de ${country}. 
         Para cada ciudad, proporciona el nombre en español (en minúsculas y sin acentos) y en inglés (quiero la IATA de la ciudad, por ejemplo MAD). 
@@ -14,26 +12,12 @@ async function getTopCities(country, numberOfCities = 3) {
     `;
 
     try {
-        const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            {
-                model: "gpt-4o-mini",
-                messages: [
-                    { role: "system", content: "Eres un experto en geografía y turismo." },
-                    { role: "user", content: prompt }
-                ],
-                max_tokens: 200,
-                temperature: 0.3,
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                },
-            }
-        );
-
-        let citiesText = response.data.choices[0].message.content.trim();
+        let citiesText = await chatCompletion({
+            system: "Eres un experto en geografía y turismo.",
+            user: prompt,
+            maxTokens: 400,
+            temperature: 0.3,
+        });
 
         const jsonMatch = citiesText.match(/\[.*\]/s);
         if (jsonMatch) {

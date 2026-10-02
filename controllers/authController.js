@@ -4,12 +4,19 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const sendVerificationEmail = require('../utils/sendVerificationEmail');
 
+// Con AUTO_VERIFY_EMAIL=true la cuenta queda verificada al registrarse y no se
+// envía correo (para entornos sin proveedor de email configurado).
+const AUTO_VERIFY_EMAIL = process.env.AUTO_VERIFY_EMAIL === 'true';
+
 exports.register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
 
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ msg: 'El usuario ya existe' });
+
+        const usernameTaken = await User.findOne({ username });
+        if (usernameTaken) return res.status(400).json({ msg: 'El nombre de usuario ya está en uso' });
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -20,11 +27,16 @@ exports.register = async (req, res) => {
             username,
             email,
             password: hashedPassword,
-            isVerified: false,
-            verificationToken
+            isVerified: AUTO_VERIFY_EMAIL,
+            verificationToken: AUTO_VERIFY_EMAIL ? undefined : verificationToken
         });
 
         await user.save();
+
+        if (AUTO_VERIFY_EMAIL) {
+            const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+            return res.json({ msg: 'Registro exitoso.', token });
+        }
 
         const verificationLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}&email=${email}`;
         await sendVerificationEmail(email, username, verificationLink);

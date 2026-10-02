@@ -1,0 +1,56 @@
+# Despliegue en un servidor donde OTRO proyecto ya tiene un Caddy en 80/443
+# (servidor de webs, /srv/traveldaring → https://traveldaring.websjfs.com).
+# La web (nginx con el build de React) y la API se unen a la red Docker de ese
+# Caddy; él hace de proxy (bloque en deploy/traveldaring.caddy, añadido al final
+# de su Caddyfile). MongoDB solo es accesible desde la red interna.
+#
+# Las imágenes se construyen fuera del servidor (1 vCPU / 2 GB) y se cargan con
+# `docker save | ssh ... docker load`:
+#   docker build -t traveldaring-api:websjfs .                      (este repo)
+#   docker build -t traveldaring-web:websjfs ../frontend-traveldaring
+#
+# Los nombres de servicio llevan prefijo a propósito: son alias DNS en la red
+# compartida y `web`, `db`... chocarían con los de otros proyectos.
+
+services:
+  traveldaring-web:
+    image: traveldaring-web:websjfs
+    restart: unless-stopped
+    networks:
+      - proxy
+    mem_limit: 64m
+
+  traveldaring-api:
+    image: traveldaring-api:websjfs
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGO_URI=mongodb://traveldaring-mongo:27017/traveldaring
+    depends_on:
+      - traveldaring-mongo
+    networks:
+      - internal
+      - proxy
+    mem_limit: 256m
+
+  traveldaring-mongo:
+    image: mongo:7
+    restart: unless-stopped
+    # Caché de WiredTiger acotada: el servidor va justo de RAM.
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
+    volumes:
+      - mongodata:/data/db
+    networks:
+      - internal
+    mem_limit: 512m
+
+networks:
+  internal:
+  proxy:
+    external: true
+    name: ${PROXY_NETWORK:?falta PROXY_NETWORK en .env (red Docker del Caddy existente)}
+
+volumes:
+  mongodata:

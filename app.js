@@ -1,11 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const passport = require('./utils/passport');
 const cors = require('cors');
-const session = require('express-session');
 const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
 
 dotenv.config();
 
@@ -25,21 +22,7 @@ app.use(limiter);
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ limit: '10kb', extended: true }));
-
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'un_secret_seguro',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 24,
-  },
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(cors({ origin: process.env.FRONTEND_URL }));
 
 const authRoutes = require('./routes/auth');
 const tripRoutes = require('./routes/trips');

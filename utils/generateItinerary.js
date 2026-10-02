@@ -1,8 +1,6 @@
-const axios = require('axios');
+const { chatCompletion } = require('./openai');
 
 async function generateItinerary(userData) {
-    const apiKey = process.env.OPENAI_API_KEY;
-
     const interests = Array.isArray(userData.interests) ? userData.interests : [];
     const amenities = Array.isArray(userData.accommodationPreferences?.amenities) ? userData.accommodationPreferences.amenities : [];
     const cuisine = Array.isArray(userData.foodPreferences?.cuisine) ? userData.foodPreferences.cuisine : [];
@@ -106,30 +104,17 @@ async function generateItinerary(userData) {
 
         **Instrucciones Adicionales:**
         - La respuesta debe ser únicamente el JSON sin ningún otro texto ni formateo, sin incluir \`\`\`json ni \`\`\`.
-        - Asegúrate de que cada día incluya recomendaciones de alojamiento basadas en las opciones de hoteles proporcionadas.
+        - Asegúrate de que cada día incluya recomendaciones de alojamiento basadas en las opciones de hoteles proporcionadas. Si no se proporcionan hoteles, recomienda un hotel real y conocido de la ciudad acorde al presupuesto y las preferencias.
     `;
 
     try {
-        const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            {
-                model: "gpt-4o-mini",
-                messages: [
-                    { role: "system", content: "Eres un asistente útil para planificar viajes." },
-                    { role: "user", content: prompt }
-                ],
-                max_tokens: 8000,
-                temperature: 0.7,
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                },
-            }
-        );
-
-        const itineraryText = response.data.choices[0].message.content.trim();
+        const itineraryText = await chatCompletion({
+            system: "Eres un asistente útil para planificar viajes.",
+            user: prompt,
+            maxTokens: 16000,
+            effort: 'low',
+            json: true,
+        });
 
         let jsonString = itineraryText;
 

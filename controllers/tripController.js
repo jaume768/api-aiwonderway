@@ -3,7 +3,16 @@ const User = require('../models/User');
 const generateTripPDF = require('../utils/generatePDF');
 const jwt = require('jsonwebtoken');
 const { cloudinary, storage } = require('../utils/cloudinary');
-exports.getCivitatisActivities = require('../utils/fetchCivitatisActivities');
+const fetchCivitatisActivities = require('../utils/fetchCivitatisActivities');
+
+exports.getCivitatisActivities = async (req, res) => {
+    try {
+        const activities = await fetchCivitatisActivities(req.params.city, 5);
+        res.json(activities);
+    } catch (err) {
+        res.status(404).json({ msg: err.message });
+    }
+};
 
 exports.uploadTripImage = async (req, res) => {
     try {
@@ -254,15 +263,10 @@ exports.downloadTrip = async (req, res) => {
             return res.status(403).json({ msg: 'No tienes permiso para descargar este itinerario' });
         }
 
-        generateTripPDF(trip, (filePath) => {
-            res.download(filePath, `${trip.title}.pdf`, (err) => {
-                if (err) {
-                    console.error(err);
-                    res.status(500).send('Error al descargar el archivo');
-                }
-                fs.unlinkSync(filePath);
-            });
-        });
+        const fileName = `${(trip.title || 'itinerario').replace(/[^\w\- ]+/g, '').trim() || 'itinerario'}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        generateTripPDF(trip, res);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error del servidor');

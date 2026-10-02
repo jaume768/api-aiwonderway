@@ -1,6 +1,7 @@
 const axios = require('axios');
 const qs = require('qs');
 const Hotel = require('../models/Hotel');
+const { chatCompletion } = require('./openai');
 
 let amadeusToken = null;
 let tokenExpirationTime = null;
@@ -97,8 +98,6 @@ function shuffleArray(array) {
 }
 
 async function obtenerSitiosWebHoteles(nombresHoteles) {
-    const apiKey = process.env.OPENAI_API_KEY;
-
     const prompt = `
     Tengo una lista de nombres de hoteles y necesito obtener las páginas web oficiales de cada uno. Por favor, proporciona una lista en formato JSON donde cada entrada tenga el nombre del hotel y su correspondiente sitio web.
 
@@ -116,26 +115,12 @@ async function obtenerSitiosWebHoteles(nombresHoteles) {
     `;
 
     try {
-        const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            {
-                model: "gpt-4o-mini",
-                messages: [
-                    { role: "system", content: "Eres un asistente útil que puede proporcionar sitios web oficiales de hoteles basándote en sus nombres." },
-                    { role: "user", content: prompt }
-                ],
-                max_tokens: 6000,
-                temperature: 0.2,
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                },
-            }
-        );
-
-        const respuesta = response.data.choices[0].message.content.trim();
+        const respuesta = await chatCompletion({
+            system: "Eres un asistente útil que puede proporcionar sitios web oficiales de hoteles basándote en sus nombres.",
+            user: prompt,
+            maxTokens: 6000,
+            temperature: 0.2,
+        });
 
         let sitiosWeb;
         try {
@@ -161,6 +146,9 @@ async function obtenerSitiosWebHoteles(nombresHoteles) {
 
 async function actualizarHotelesConSitiosWeb(cityCode, numHotels = 4) {
     const hoteles = await fetchAmadeusHotels(cityCode, numHotels);
+    if (hoteles.length === 0) {
+        return [];
+    }
     const nombresHoteles = hoteles.map(hotel => hotel.name);
 
     const sitiosWeb = await obtenerSitiosWebHoteles(nombresHoteles);
