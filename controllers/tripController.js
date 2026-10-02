@@ -33,6 +33,13 @@ exports.uploadTripImage = async (req, res) => {
             return res.status(403).json({ msg: 'No tienes permiso para editar este itinerario' });
         }
 
+        if (trip.isSample) {
+            const requester = await User.findById(userId);
+            if (requester?.isDemo) {
+                return res.status(403).json({ msg: 'Los itinerarios de ejemplo de la demo no se pueden modificar.' });
+            }
+        }
+
         if (!req.file) {
             return res.status(400).json({ msg: 'No se ha proporcionado ninguna imagen' });
         }
@@ -144,7 +151,7 @@ exports.getPopularTrips = async (req, res) => {
       let trips = await Trip.find({ _id: { $in: fixedTripIds } });
 
       if (trips.length === 0) {
-        trips = await Trip.find({ public: true }).sort({ createdAt: -1 }).limit(12);
+        trips = await Trip.find({ public: true }).sort({ createdAt: -1 }).limit(24);
       }
   
       trips = trips.map(trip => {
@@ -207,6 +214,13 @@ exports.deleteTrip = async (req, res) => {
 
         if (trip.createdBy.toString() !== userId) {
             return res.status(403).json({ msg: 'No tienes permiso para eliminar este itinerario' });
+        }
+
+        if (trip.isSample) {
+            const requester = await User.findById(userId);
+            if (requester?.isDemo) {
+                return res.status(403).json({ msg: 'Los itinerarios de ejemplo de la demo no se pueden modificar.' });
+            }
         }
 
         await Trip.findByIdAndDelete(tripId);
@@ -295,6 +309,17 @@ exports.updateTrip = async (req, res) => {
         if (!isCreator && !isCollaborator) {
             return res.status(403).json({ msg: 'No tienes permiso para editar este itinerario' });
         }
+
+        if (trip.isSample) {
+            const requester = await User.findById(userId);
+            if (requester?.isDemo) {
+                return res.status(403).json({ msg: 'Los itinerarios de ejemplo de la demo no se pueden modificar.' });
+            }
+        }
+
+        // Campos que nunca se cambian desde el formulario de edición.
+        delete updateData.isSample;
+        delete updateData.createdBy;
 
         const creatorOnlyFields = ['createdBy', 'collaborators', 'public'];
 

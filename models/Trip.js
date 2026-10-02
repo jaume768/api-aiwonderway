@@ -12,6 +12,8 @@ const tripSchema = new Schema(
         description: { type: String, required: true },
         itinerary: { type: Schema.Types.Mixed, required: true }, // Guardar como objeto JSON
         public: { type: Boolean, default: true },
+        // Itinerario de ejemplo de la cuenta demo: no cuenta para su límite y no se puede modificar desde ella.
+        isSample: { type: Boolean, default: false },
         reviews: [{ type: Schema.Types.ObjectId, ref: 'Review' }],
         comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
         activitiesPerCity: { type: Schema.Types.Mixed }, // Asegurado

@@ -29,6 +29,8 @@ async function generateItinerary(userData) {
         }
     }
 
+    const tripCities = Object.keys(userData.activitiesPerCity || {});
+
     const prompt = `
         Eres un asistente de planificación de viajes experto. Basándote en la información proporcionada, genera un itinerario detallado para el viaje. El itinerario debe estar organizado por días e incluir recomendaciones de actividades, lugares para visitar, opciones de alojamiento y transporte. La respuesta **debe ser únicamente** un objeto JSON con la siguiente estructura:
 
@@ -97,6 +99,8 @@ async function generateItinerary(userData) {
 
         **Otros Aspectos Importantes:**
         - ${userData.additionalPreferences || 'Ninguno'}
+
+        ${tripCities.length > 0 ? `**Ciudades del viaje:** ${tripCities.join(', ')} (organiza el itinerario en estas ciudades)` : ''}
 
         ${activitiesDescription}
 

@@ -4,13 +4,14 @@ const fetchCivitatisActivities = require('../utils/fetchCivitatisActivities');
 const actualizarHotelesConSitiosWeb = require('../utils/fetchAmadeusHotels');
 const getTopCities = require('../utils/getTopCities');
 const generateItinerary = require('../utils/generateItinerary');
+const fetchDestinationImage = require('../utils/fetchDestinationImage');
 const moment = require('moment');
 const generateTripPDF = require('../utils/generatePDF');
 const jwt = require('jsonwebtoken');
 const { cloudinary, storage } = require('../utils/cloudinary');
 const fs = require('fs');
 
-// Máximo de viajes que puede tener a la vez la cuenta demo.
+// Máximo de viajes propios (sin contar los de ejemplo) que puede tener a la vez la cuenta demo.
 const DEMO_MAX_TRIPS = Number(process.env.DEMO_MAX_TRIPS) || 10;
 
 exports.createTrip = async (req, res) => {
@@ -36,7 +37,7 @@ exports.createTrip = async (req, res) => {
 
         const creator = await User.findById(userId);
         if (creator?.isDemo) {
-            const demoTrips = await Trip.countDocuments({ createdBy: userId });
+            const demoTrips = await Trip.countDocuments({ createdBy: userId, isSample: { $ne: true } });
             if (demoTrips >= DEMO_MAX_TRIPS) {
                 return res.status(403).json({
                     msg: `La cuenta demo admite un máximo de ${DEMO_MAX_TRIPS} viajes. Elimina alguno para crear otro.`,
@@ -81,7 +82,7 @@ exports.createTrip = async (req, res) => {
         }
 
         const country = destinationPreferences.countryName;
-        const topCities = await getTopCities(country, numCities);
+        const topCities = await getTopCities(country, numCities, [title, description].filter(Boolean).join('. '));
 
         const activitiesPerCity = {};
         const hotelsPerCity = {};
@@ -125,11 +126,19 @@ exports.createTrip = async (req, res) => {
 
         const itinerary = await generateItinerary(userData);
 
+        // Foto representativa del destino: la de la primera ciudad que tenga una.
+        let imageUrl;
+        for (const cityObj of topCities) {
+            imageUrl = await fetchDestinationImage(cityObj.spanish, country);
+            if (imageUrl) break;
+        }
+
         const trip = new Trip({
             createdBy: userId,
             title,
             description,
             itinerary,
+            imageUrl,
             public: isPublic,
             travelDates,
             destinationPreferences,

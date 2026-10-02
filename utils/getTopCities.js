@@ -1,8 +1,11 @@
 const { chatCompletion } = require('./openai');
 
-async function getTopCities(country, numberOfCities = 3) {
+// `tripHint` (título y descripción del viaje) permite elegir las ciudades que el usuario ya menciona.
+async function getTopCities(country, numberOfCities = 3, tripHint = '') {
     const prompt = `
-        Proporciona una lista en formato JSON de las ${numberOfCities} ciudades más importantes de ${country}. 
+        Proporciona una lista en formato JSON de las ${numberOfCities} ciudades de ${country} más adecuadas para este viaje.
+        Si la descripción del viaje menciona ciudades concretas de ${country}, elige esas; si no, las más importantes para el turismo.
+        Descripción del viaje: "${tripHint || 'sin descripción'}"
         Para cada ciudad, proporciona el nombre en español (en minúsculas y sin acentos) y en inglés (quiero la IATA de la ciudad, por ejemplo MAD). 
         La respuesta debe ser un array JSON de objetos con la estructura:
         [
